@@ -114,6 +114,10 @@ namespace linerider
         public static String DefaultAutosaveFormat; //What the autosave format is
         public static String DefaultQuicksaveFormat; //What the autosave format is
         public static String DefaultCrashBackupFormat; //Format crash backups are saved to
+        public static String LastSongSearch; //Previous song search
+        public static String LastSongSearchType; //Last type that was searched for songs
+        public static String LastTrackSearch; //Previous track search
+        public static String LastTrackSearchType; //Last type that was searched for tracks
 
         public static bool ColorPlayback;
         public static bool OnionSkinning;
@@ -470,6 +474,10 @@ namespace linerider
             DefaultAutosaveFormat = GetSetting(lines, nameof(DefaultAutosaveFormat));
             DefaultQuicksaveFormat = GetSetting(lines, nameof(DefaultQuicksaveFormat));
             DefaultCrashBackupFormat = GetSetting(lines, nameof(DefaultCrashBackupFormat));
+            LastSongSearch = GetSetting(lines, nameof(LastSongSearch));
+            LastSongSearchType = GetSetting(lines, nameof(LastSongSearchType));
+            LastTrackSearch = GetSetting(lines, nameof(LastTrackSearch));
+            LastTrackSearchType = GetSetting(lines, nameof(LastTrackSearchType));
             if (multiScarfSegments == 0) { multiScarfSegments++; }
             if (ScarfSegments == 0) { ScarfSegments++; }
 
@@ -546,7 +554,11 @@ namespace linerider
             config += "\r\n" + MakeSetting(nameof(DefaultAutosaveFormat), DefaultAutosaveFormat);
             config += "\r\n" + MakeSetting(nameof(DefaultQuicksaveFormat), DefaultQuicksaveFormat);
             config += "\r\n" + MakeSetting(nameof(DefaultCrashBackupFormat), DefaultCrashBackupFormat);
-            
+            config += "\r\n" + MakeSetting(nameof(LastSongSearch), LastSongSearch);
+            config += "\r\n" + MakeSetting(nameof(LastSongSearchType), LastSongSearchType);
+            config += "\r\n" + MakeSetting(nameof(LastTrackSearch), LastTrackSearch);
+            config += "\r\n" + MakeSetting(nameof(LastTrackSearchType), LastTrackSearchType);
+
             foreach (var binds in Keybinds)
             {
                 foreach (var bind in binds.Value)

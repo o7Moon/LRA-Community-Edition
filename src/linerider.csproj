@@ -51,7 +51,6 @@
     <Compile Include="Game\TriggerType.cs" />
     <Compile Include="Game\GameTrigger.cs" />
     <Compile Include="IO\json\RiderData.cs" />
-    <Compile Include="IO\TriggerConverter.cs" />
     <Compile Include="MainWindow.cs" />
     <Compile Include="GameCanvas.cs" />
     <Compile Include="Editor.cs" />

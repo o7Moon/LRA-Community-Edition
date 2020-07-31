@@ -12,26 +12,28 @@ namespace linerider.UI
 {
     public class TrackInfoWindow : DialogBase
     {
+        private ComboBox _searchtypecombobox;
+
         private PropertyTree _tree;
         public TrackInfoWindow(GameCanvas parent, Editor editor) : base(parent, editor)
         {
             Title = "Track Info";
             Setup();
             MakeModal(true);
-            DisableResizing();
-            SetSize(350, 400);
+            //DisableResizing();
+            SetSize(350, 600);
         }
-        private void ListSongs(ControlBase parent)
+        private void ListSongs(ControlBase parent, string searchText = "", string method = "")
         {
             ListBox Songs = new ListBox(parent);
             Songs.AllowMultiSelect = false;
             Songs.RowSelected += (o, e) =>
-             {
-                 var str = (string)e.SelectedItem.UserData;
-                 var song = _editor.Song;
-                 song.Location = str;
-                 _editor.Song = song;
-             };
+            {
+                var str = (string)e.SelectedItem.UserData;
+                var song = _editor.Song;
+                song.Location = str;
+                _editor.Song = song;
+            };
             Songs.Dock = Dock.Fill;
             var filedir = Program.UserDirectory + "Songs";
             if (Directory.Exists(filedir))
@@ -48,7 +50,10 @@ namespace linerider.UI
                     var lower = file.ToLower(Program.Culture);
                     foreach (var type in supportedfiletypes)
                     {
-                        if (lower.EndsWith(type, StringComparison.OrdinalIgnoreCase))
+                        bool contains = Path.GetFileName(file).Contains(searchText);
+                        bool start = Path.GetFileName(file).StartsWith(searchText, StringComparison.OrdinalIgnoreCase);
+
+                        if (lower.EndsWith(type, StringComparison.OrdinalIgnoreCase) && (method.Equals("C") ? contains : start))
                         {
                             supportedfiles.Add(file);
                             break;
@@ -69,18 +74,195 @@ namespace linerider.UI
                 }
             }
         }
+        private void PopulateSettings(ControlBase parent)
+        {
+            Dictionary<string, bool> trackfeatures;
+            using (var trk = _editor.CreateTrackReader())
+            {
+                trackfeatures = trk.GetFeatures();
+            }
+
+            _tree = new PropertyTree(parent)
+            {
+                Dock = Dock.Fill,
+            };
+
+            var table = _tree.Add("Settings", 150);
+            NumberProperty startzoom = new NumberProperty(null)
+            {
+                Min = 1,
+                NumberValue = _editor.StartZoom,
+                Max = Constants.MaxZoom,
+            };
+            startzoom.ValueChanged += (o, e) =>
+            {
+                _editor.StartZoom = (float)startzoom.NumberValue;
+            };
+            table.Add("Start Zoom", startzoom);
+
+            //BG COLORS
+            table = _tree.Add("Starting Background Color", 150);
+            NumberProperty startbgred = new NumberProperty(null) { Min = 0, Max = 255 };
+            startbgred.Value = _editor.StartingBGColorR.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
+            startbgred.ValueChanged += (o, e) =>
+            {
+                _editor.StartingBGColorR = int.Parse(startbgred.Value);
+            };
+            table.Add("Background Red", startbgred);
+            NumberProperty startbggreen = new NumberProperty(null) { Min = 0, Max = 255 };
+            startbggreen.Value = _editor.StartingBGColorG.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
+            startbggreen.ValueChanged += (o, e) =>
+            {
+                _editor.StartingBGColorG = int.Parse(startbggreen.Value);
+            };
+            table.Add("Background Green", startbggreen);
+            NumberProperty startbgblue = new NumberProperty(null) { Min = 0, Max = 255 };
+            startbgblue.Value = _editor.StartingBGColorB.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
+            startbgblue.ValueChanged += (o, e) =>
+            {
+                _editor.StartingBGColorB = int.Parse(startbgblue.Value);
+            };
+            table.Add("Background Blue", startbgblue);
+            //LINE COLORS
+            table = _tree.Add("Starting Line Color", 150);
+            NumberProperty startlinered = new NumberProperty(null) { Min = 0, Max = 255 };
+            startlinered.Value = _editor.StartingLineColorR.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
+            startlinered.ValueChanged += (o, e) =>
+            {
+                _editor.StartingLineColorR = int.Parse(startlinered.Value);
+            };
+            table.Add("Line Red", startlinered);
+            NumberProperty startlinegreen = new NumberProperty(null) { Min = 0, Max = 255 };
+            startlinegreen.Value = _editor.StartingLineColorG.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
+            startlinegreen.ValueChanged += (o, e) =>
+            {
+                _editor.StartingLineColorG = int.Parse(startlinegreen.Value);
+            };
+            table.Add("Line Green", startlinegreen);
+            NumberProperty startlineblue = new NumberProperty(null) { Min = 0, Max = 255 };
+            startlineblue.Value = _editor.StartingLineColorB.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
+            startlineblue.ValueChanged += (o, e) =>
+            {
+                _editor.StartingLineColorB = int.Parse(startlineblue.Value);
+            };
+            table.Add("Line Blue", startlineblue);
+
+
+
+            table = _tree.Add("Info", 150);
+
+            // var trackname = table.AddLabel("Track Name", _editor.Name);
+            var physics = table.AddLabel("Physics", CheckFeature(trackfeatures, TrackFeatures.six_one) ? "6.1" : "6.2");
+
+            table.AddLabel("Blue Lines", _editor.BlueLines.ToString());
+            table.AddLabel("Red Lines", _editor.RedLines.ToString());
+            table.AddLabel("Scenery Lines", _editor.GreenLines.ToString());
+            table = _tree.Add("Features Used", 150);
+
+            AddFeature(table, trackfeatures, "Red Multiplier", TrackFeatures.redmultiplier);
+            AddFeature(table, trackfeatures, "Scenery Width", TrackFeatures.scenerywidth);
+            AddFeature(table, trackfeatures, "Line Triggers", TrackFeatures.ignorable_trigger);
+           
+
+            _tree.ExpandAll();
+        }
+        private void PopulatePhysics(ControlBase parent)
+        {
+            _tree = new PropertyTree(parent)
+            {
+                Dock = Dock.Fill,
+            };
+
+            var table = _tree.Add("Physics Modifiers", 150);
+            var zerostart = GwenHelper.AddPropertyCheckbox(table, "Zero Start", _editor.ZeroStart);
+            zerostart.ValueChanged += (o, e) =>
+            {
+                _editor.ZeroStart = zerostart.IsChecked;
+            };
+
+            NumberProperty ygravity = new NumberProperty(null)
+            {
+                Min = float.MinValue + 1,
+                Max = float.MaxValue - 1,
+            };
+            ygravity.Value = ((float)_editor.YGravity).ToString();
+            ygravity.ValueChanged += (o, e) =>
+            {
+                _editor.YGravity = float.Parse(ygravity.Value);
+            };
+            table.Add("Y Gravity Multiplier", ygravity);
+            NumberProperty xgravity = new NumberProperty(null)
+            {
+                Min = float.MinValue + 1,
+                Max = float.MaxValue - 1,
+            };
+            xgravity.Value = ((float)_editor.XGravity).ToString();
+            xgravity.ValueChanged += (o, e) =>
+            {
+                _editor.XGravity = float.Parse(xgravity.Value);
+            };
+            table.Add("X Gravity Multiplier", xgravity);
+
+            NumberProperty gravitywellsize = new NumberProperty(null)
+            {
+                Min = 0,
+                Max = double.MaxValue - 1,
+            };
+            gravitywellsize.Value = ((double)_editor.GravityWellSize).ToString();
+            gravitywellsize.ValueChanged += (o, e) =>
+            {
+                _editor.GravityWellSize = double.Parse(gravitywellsize.Value);
+            };
+            table.Add("Gravity Well Size", gravitywellsize);
+
+            var remount = GwenHelper.AddPropertyCheckbox(table, "Remount (Unfinished)", _editor.UseRemount);
+            remount.Tooltip = "Remount is a Work In Progress by Superdavo0001\n(Future changes may cause this track to become incompatible)";
+            remount.ValueChanged += (o, e) =>
+            {
+                _editor.UseRemount = remount.IsChecked;
+            };
+
+            _tree.ExpandAll();
+        }
         private void PopulateSong(ControlBase parent)
         {
             var currentpanel = GwenHelper.CreateHeaderPanel(parent, "Current Song");
             currentpanel.Dock = Dock.Fill;
-            ListSongs(currentpanel);
             var opts = GwenHelper.CreateHeaderPanel(parent, "Sync options");
+            var searchopts = GwenHelper.CreateHeaderPanel(parent, "Search Options");
+
+            ListSongs(currentpanel, Settings.LastSongSearch + "", Settings.LastSongSearchType + "");
+            TextBox tb = new TextBox(searchopts);
+            tb.Width = 312;
+            tb.SetPosition(10, 50);
+            tb.Text = Settings.LastSongSearch + "";
+            tb.TextChanged += (o, e) =>
+            {
+                ListSongs(currentpanel, tb.Text, (string)_searchtypecombobox.SelectedItem.UserData);
+                Settings.LastSongSearch = tb.Text;
+                Settings.LastSongSearchType = (string)_searchtypecombobox.SelectedItem.UserData;
+                Settings.Save();
+            };
+
+            _searchtypecombobox = GwenHelper.CreateLabeledCombobox(searchopts, "Search by");
+            _searchtypecombobox.AddItem("Contains", "", "C");
+            _searchtypecombobox.AddItem("Starts With", "", "SW");
+            _searchtypecombobox.SelectByUserData(Settings.LastSongSearchType + "");
+            _searchtypecombobox.ItemSelected += (o, e) =>
+            {
+                ListSongs(currentpanel, tb.Text, (string)e.SelectedItem.UserData);
+                Settings.LastSongSearch = tb.Text;
+                Settings.LastSongSearchType = (string)e.SelectedItem.UserData;
+                Settings.Save();
+            };
+
+
             var syncenabled = GwenHelper.AddCheckbox(opts, "Sync Song to Track", _editor.Song.Enabled, (o, e) =>
-               {
-                   var song = _editor.Song;
-                   song.Enabled = ((Checkbox)o).IsChecked;
-                   _editor.Song = song;
-               });
+            {
+                var song = _editor.Song;
+                song.Enabled = ((Checkbox)o).IsChecked;
+                _editor.Song = song;
+            });
             Spinner offset = new Spinner(null)
             {
                 Min = 0,
@@ -136,146 +318,18 @@ namespace linerider.UI
         }
         private void Setup()
         {
-            Dictionary<string, bool> trackfeatures;
-            using (var trk = _editor.CreateTrackReader())
-            {
-                trackfeatures = trk.GetFeatures();
-            }
             TabControl tabs = new TabControl(this)
             {
                 Dock = Dock.Fill
             };
+
             var settings = tabs.AddPage("Settings");
+            var physics = tabs.AddPage("Physics Modifers");
             var song = tabs.AddPage("Song");
-            _tree = new PropertyTree(settings)
-            {
-                Dock = Dock.Fill,
-            };
-            var table = _tree.Add("Settings", 150);
-            NumberProperty startzoom = new NumberProperty(null)
-            {
-                Min = 1,
-                NumberValue = _editor.StartZoom,
-                Max = Constants.MaxZoom,
-            };
-            startzoom.ValueChanged += (o, e) =>
-            {
-                _editor.StartZoom = (float)startzoom.NumberValue;
-            };
-            table.Add("Start Zoom", startzoom);
-            var zerostart = GwenHelper.AddPropertyCheckbox(table, "Zero Start", _editor.ZeroStart);
-            zerostart.ValueChanged += (o, e) =>
-             {
-                 _editor.ZeroStart = zerostart.IsChecked;
-             };
-            
-            NumberProperty ygravity = new NumberProperty(null)
-            {
-                Min = float.MinValue+1,
-                Max = float.MaxValue-1,
-            };
-            ygravity.Value = ((float)_editor.YGravity).ToString();
-            ygravity.ValueChanged += (o, e) =>
-            {
-                _editor.YGravity = float.Parse(ygravity.Value);
-            };
-            table.Add("Y Gravity Multiplier", ygravity);
-            NumberProperty xgravity = new NumberProperty(null)
-            {
-                Min = float.MinValue + 1,
-                Max = float.MaxValue - 1,
-            };
-            xgravity.Value = ((float)_editor.XGravity).ToString();
-            xgravity.ValueChanged += (o, e) =>
-            {
-                _editor.XGravity = float.Parse(xgravity.Value);
-            };
-            table.Add("X Gravity Multiplier", xgravity);
 
-            NumberProperty gravitywellsize = new NumberProperty(null)
-            {
-                Min = 0,
-                Max = double.MaxValue - 1,
-            };
-            gravitywellsize.Value = ((double)_editor.GravityWellSize).ToString();
-            gravitywellsize.ValueChanged += (o, e) =>
-            {
-                _editor.GravityWellSize = double.Parse(gravitywellsize.Value);
-            };
-            table.Add("Gravity Well Size", gravitywellsize);
-
-            //BG COLORS
-            table = _tree.Add("Starting Background Color", 150);
-            NumberProperty startbgred = new NumberProperty(null) { Min = 0, Max = 255 };
-            startbgred.Value = _editor.StartingBGColorR.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
-            startbgred.ValueChanged += (o, e) =>
-            {
-                _editor.StartingBGColorR = int.Parse(startbgred.Value);
-            };
-            table.Add("Background Red", startbgred);
-            NumberProperty startbggreen = new NumberProperty(null) { Min = 0, Max = 255 };
-            startbggreen.Value = _editor.StartingBGColorG.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
-            startbggreen.ValueChanged += (o, e) =>
-            {
-                _editor.StartingBGColorG = int.Parse(startbggreen.Value);
-            };
-            table.Add("Background Green", startbggreen);
-            NumberProperty startbgblue = new NumberProperty(null) { Min = 0, Max = 255 };
-            startbgblue.Value = _editor.StartingBGColorB.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
-            startbgblue.ValueChanged += (o, e) =>
-            {
-                _editor.StartingBGColorB = int.Parse(startbgblue.Value);
-            };
-            table.Add("Background Blue", startbgblue);
-            //LINE COLORS
-            table = _tree.Add("Starting Line Color", 150);
-            NumberProperty startlinered = new NumberProperty(null) { Min = 0, Max = 255 };
-            startlinered.Value = _editor.StartingLineColorR.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
-            startlinered.ValueChanged += (o, e) =>
-            {
-                _editor.StartingLineColorR = int.Parse(startlinered.Value);
-            };
-            table.Add("Line Red", startlinered);
-            NumberProperty startlinegreen = new NumberProperty(null) { Min = 0, Max = 255 };
-            startlinegreen.Value = _editor.StartingLineColorG.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
-            startlinegreen.ValueChanged += (o, e) =>
-            {
-                _editor.StartingLineColorG = int.Parse(startlinegreen.Value);
-            };
-            table.Add("Line Green", startlinegreen);
-            NumberProperty startlineblue = new NumberProperty(null) { Min = 0, Max = 255 };
-            startlineblue.Value = _editor.StartingLineColorB.ToString(); //Put value out here because putting it in the number property makes it get set to 100 for some reason??? 
-            startlineblue.ValueChanged += (o, e) =>
-            {
-                _editor.StartingLineColorB = int.Parse(startlineblue.Value);
-            };
-            table.Add("Line Blue", startlineblue);
-
-
-
-            table = _tree.Add("Info", 150);
-            // var trackname = table.AddLabel("Track Name", _editor.Name);
-            var physics = table.AddLabel("Physics", CheckFeature(trackfeatures, TrackFeatures.six_one) ? "6.1" : "6.2");
-
-            table.AddLabel("Blue Lines", _editor.BlueLines.ToString());
-            table.AddLabel("Red Lines", _editor.RedLines.ToString());
-            table.AddLabel("Scenery Lines", _editor.GreenLines.ToString());
-            table = _tree.Add("Features Used", 150);
-
-            AddFeature(table, trackfeatures, "Red Multiplier", TrackFeatures.redmultiplier);
-            AddFeature(table, trackfeatures, "Scenery Width", TrackFeatures.scenerywidth);
-            AddFeature(table, trackfeatures, "Line Triggers", TrackFeatures.ignorable_trigger);
-
-            table = _tree.Add("Physics Modifiers", 150);
-            var remount = GwenHelper.AddPropertyCheckbox(table, "Remount", _editor.UseRemount);
-            remount.ValueChanged += (o, e) =>
-            {
-                _editor.UseRemount = remount.IsChecked;
-            };
-
+            PopulateSettings(settings);
+            PopulatePhysics(physics);
             PopulateSong(song);
-            _tree.ExpandAll();
-            // table.Add
         }
         private bool CheckFeature(Dictionary<string, bool> features, string feature)
         {

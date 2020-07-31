@@ -896,9 +896,5 @@ namespace linerider
         {
             Camera.InvalidateFrame(frame);
         }
-        public Track getTrack()
-        {
-            return _track;
-        }
     }
 }

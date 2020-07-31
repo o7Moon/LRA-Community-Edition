@@ -19,6 +19,8 @@ namespace linerider.UI
         private TreeControl _tree;
         private Button _load;
         private Button _delete;
+        private ComboBox _searchtypecombobox;
+        private TextBox _searchtextbox;
         // while there should only be one load window at a time, in extreme 
         // cases the user could load a track, the window closes, the track
         // is loading, and opens another one. we want to consider the other
@@ -27,6 +29,46 @@ namespace linerider.UI
         public LoadWindow(GameCanvas parent, Editor editor) : base(parent, editor)
         {
             Title = title;
+            SetSize(424, 400);
+
+            Panel top = new Panel(this)
+            {
+                Dock = Dock.Top,
+                AutoSizeToContents = true,
+                Margin = new Margin(0, 5, 0, 0)
+            };
+
+
+
+            _searchtypecombobox = GwenHelper.CreateLabeledCombobox(top, "Search by");
+            _searchtypecombobox.AddItem("Folder Contains", "", "LC");
+            _searchtypecombobox.AddItem("Folder Starts With", "", "LSW");
+            _searchtypecombobox.AddItem("File Contains", "", "FC");
+            _searchtypecombobox.AddItem("File Starts With", "", "FSW");
+            _searchtypecombobox.SelectByUserData(Settings.LastTrackSearchType);
+            _searchtypecombobox.Width = 129;
+            _searchtypecombobox.ItemSelected += (o, e) =>
+            {
+                _tree.RemoveAll();
+                Setup(_searchtextbox.Text, (string)e.SelectedItem.UserData);
+                Settings.LastTrackSearchType = (string)e.SelectedItem.UserData;
+                Settings.LastTrackSearch = _searchtextbox.Text;
+                Settings.Save();
+            };
+            _searchtextbox = new TextBox(top);
+            _searchtextbox.Width = (this.Width - _searchtextbox.Width) - 14;
+            _searchtextbox.Height = 20;
+            _searchtextbox.SetPosition(64, 1);
+            _searchtextbox.Text = Settings.LastTrackSearch + "";
+            _searchtextbox.TextChanged += (o, e) =>
+            {
+                _tree.RemoveAll();
+                Setup(_searchtextbox.Text, (string)_searchtypecombobox.SelectedItem.UserData);
+                Settings.LastTrackSearchType = (string)_searchtypecombobox.SelectedItem.UserData;
+                Settings.LastTrackSearch = _searchtextbox.Text;
+                Settings.Save();
+            };
+
             _tree = new TreeControl(this)
             {
                 Dock = Dock.Fill
@@ -64,12 +106,17 @@ namespace linerider.UI
                     Load(_tree.SelectedChildren[0]);
                 }
             };
-            SetSize(400, 400);
             // AutoSizeToContents = true;
             MakeModal(true);
-            Setup();
+            Setup(Settings.LastTrackSearch + "", Settings.LastTrackSearchType + "");
+
+            this.Resized += (o, e) =>
+            {
+                _searchtextbox.Width = (this.Width - 214);
+            };
+
         }
-        private void Setup()
+        private void Setup(string searchterm = "", string method = "")
         {
             _tree.SelectionChanged += (o, e) =>
             {
@@ -112,14 +159,21 @@ namespace linerider.UI
             }
             foreach (var dir in dirs)
             {
+                if (method.Equals("LC")) { if (!dir.Contains(searchterm)) { continue; } }
+                else if (method.Equals("LSW")) { if (!dir.StartsWith(searchterm)) { continue; } }
+
                 var dirpath = Constants.TracksDirectory + dir + Path.DirectorySeparatorChar;
                 var tracks = GetTracks(dirpath);
+
                 if (tracks.Count != 0)
                 {
                     var node = _tree.AddNode(dir);
                     node.UserData = new ItemData(ItemType.Folder, dirpath, dir);
                     foreach (var file in tracks)
                     {
+                        if (method.Equals("FC")) { if (!RemoveNumbersFromFileNames(Path.GetFileName(file)).Contains(searchterm)) { continue; } }
+                        else if (method.Equals("FSW")) { if (!RemoveNumbersFromFileNames(Path.GetFileName(file)).StartsWith(searchterm)) { continue; } }
+
                         var filenode = node.AddNode(Path.GetFileName(file));
                         filenode.UserData = new ItemData(ItemType.TrackFile, file, dir);
                         if (loadedfn != null && file == loadedfn)
@@ -127,6 +181,10 @@ namespace linerider.UI
                             node.ExpandAll();
                             filenode.IsSelected = true;
                         }
+                    }
+                    if (node.Children.Count == 0)
+                    {
+                        _tree.RemoveChild(node, true);
                     }
                 }
             }
@@ -383,5 +441,17 @@ namespace linerider.UI
                 sol = data;
             }
         }
+
+        private string RemoveNumbersFromFileNames(string name)
+        {
+            string ret = name;
+            while (ret.StartsWith("0") || ret.StartsWith("1") || ret.StartsWith("2") || ret.StartsWith("3") || ret.StartsWith("4") || ret.StartsWith("5") || ret.StartsWith("6") || ret.StartsWith("7") || ret.StartsWith("8") || ret.StartsWith("9") || ret.StartsWith(" "))
+            {
+                ret = ret.Substring(1);
+            }
+
+            return ret;
+        }
+
     }
 }

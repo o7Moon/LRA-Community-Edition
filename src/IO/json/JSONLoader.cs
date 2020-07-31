@@ -85,7 +85,6 @@ namespace linerider.IO
             }
             if (trackobj.triggers != null)
             {
-                List<LineTrigger> linetriggers = new List<LineTrigger>();
                 foreach (var trigger in trackobj.triggers)
                 {
                     if (ret.LineLookup.TryGetValue(trigger.ID, out GameLine line))
@@ -94,22 +93,20 @@ namespace linerider.IO
                         {
                             if (trigger.zoom)
                             {
-                                linetriggers.Add(new LineTrigger()
+                                stl.Trigger = new LineTrigger()
                                 {
                                     ZoomTrigger = trigger.zoom,
                                     ZoomTarget = (float)MathHelper.Clamp(
                                         trigger.target,
                                         Utils.Constants.MinimumZoom,
                                         Utils.Constants.MaxZoom),
-                                    ZoomFrames = trigger.frames,
-                                    LineID = trigger.ID
-                                });
+                                    ZoomFrames = trigger.frames
+                                };
                             }
                         }
                     }
                 }
-                ret.Triggers = TriggerConverter.ConvertTriggers(linetriggers, ret);
-
+                    
             }
             if (trackobj.gameTriggers != null)
             {

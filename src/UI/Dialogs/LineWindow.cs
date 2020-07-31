@@ -18,9 +18,13 @@ namespace linerider.UI
         private PropertyTree _proptree;
         private GameLine _ownerline;
         private GameLine _linecopy;
+        private NumberProperty _angleProp;
+        private NumberProperty _length;
+        private NumberProperty _width;
         private bool _linechangemade = false;
         private const string DefaultTitle = "Line Properties";
         private bool closing = false;
+        private Turtle _turtle;
         public LineWindow(GameCanvas parent, Editor editor, GameLine line) : base(parent, editor)
         {
             _ownerline = line;
@@ -35,6 +39,7 @@ namespace linerider.UI
             };
             _proptree.Dock = Dock.Top;
             MakeModal(true);
+            _turtle = new Turtle(_ownerline.Position); //Thank you Sam for the help
             Setup();
             _proptree.ExpandAll();
         }
@@ -92,6 +97,7 @@ namespace linerider.UI
         private void Setup()
         {
             SetupRedOptions(_proptree);
+            SetupTriggers(_proptree);
             Panel bottom = new Panel(this)
             {
                 Dock = Dock.Bottom,
@@ -124,10 +130,90 @@ namespace linerider.UI
         }
         private void SetupRedOptions(PropertyTree tree)
         {
+            var vec = _ownerline.GetVector();
+            var len = vec.Length;
+            var angle = Angle.FromVector(vec);
+            angle.Degrees += 90;
+            var lineProp = tree.Add("Line Properties", 120);
+
+            Console.WriteLine(_ownerline.GetType().ToString());
+
+            if (!(_ownerline is SceneryLine scenery))
+            {
+                var id = new NumberProperty(lineProp)
+                {
+                    Min = 0,
+                    Max = int.MaxValue - 1,
+                    NumberValue = _ownerline.ID,
+                    OnlyWholeNumbers = true,
+                    IsDisabled = true
+                };
+                id.ValueChanged += (o, e) =>
+                {
+                    ChangeID((int)id.NumberValue); //TODO
+                };
+                lineProp.Add("ID", id);
+            }
+
+            _length = new NumberProperty(lineProp)
+            {
+                Min = double.MinValue + 1,
+                Max = double.MaxValue - 1,
+                NumberValue = len,
+            };
+            _length.ValueChanged += (o, e) =>
+            {
+                ChangeLength(_length.NumberValue);
+            };
+            lineProp.Add("Length", _length);
+
+            _angleProp = new NumberProperty(lineProp)
+            {
+                Min = 0,
+                Max = 360,
+                NumberValue = angle.Degrees,
+            };
+            _angleProp.ValueChanged += (o, e) =>
+            {
+                ChangeAngle(_angleProp.NumberValue);
+            };
+            lineProp.Add("Angle", _angleProp);
+
+            if (!(_ownerline is SceneryLine))
+            {
+                var multilines = new NumberProperty(lineProp)
+                {
+                    Min = 1,
+                    Max = int.MaxValue - 1,
+                    OnlyWholeNumbers = true,
+                };
+                multilines.NumberValue = GetMultiLines(true).Count;
+                multilines.ValueChanged += (o, e) =>
+                {
+                    Multiline((int)multilines.NumberValue);
+                };
+                lineProp.Add("Multilines", multilines);
+            }
+
+            if (_ownerline is SceneryLine sceneryLine)
+            {
+                _width = new NumberProperty(lineProp)
+                {
+                    Min = 0.1,
+                    Max = 25.5,
+                    NumberValue = _ownerline.Width,
+                };
+                _width.ValueChanged += (o, e) =>
+                {
+                    ChangeWidth(_width.NumberValue);
+                };
+                lineProp.Add("Width", _width);
+            }
+
             if (_ownerline is RedLine red)
             {
-                var table = tree.Add("Acceleration", 120);
-                var multiplier = new NumberProperty(table)
+                var acceleration = tree.Add("Acceleration", 120);
+                var multiplier = new NumberProperty(acceleration)
                 {
                     Min = 1,
                     Max = 255,
@@ -138,22 +224,10 @@ namespace linerider.UI
                 {
                     ChangeMultiplier((int)multiplier.NumberValue);
                 };
-                table.Add("Multiplier", multiplier);
-                var multilines = new NumberProperty(table)
-                {
-                    Min = 1,
-                    Max = 9999,
-                    OnlyWholeNumbers = true,
-                };
-                multilines.NumberValue = GetMultiLines(true).Count;
-                multilines.ValueChanged += (o, e) =>
-                {
-                    Multiline((int)multilines.NumberValue);
-                };
-                table.Add("Multilines", multilines);
+                acceleration.Add("Multiplier", multiplier);
 
                 var accelinverse = GwenHelper.AddPropertyCheckbox(
-                    table,
+                    acceleration,
                     "Inverse",
                     red.inv
                     );
@@ -178,6 +252,124 @@ namespace linerider.UI
                         UpdateOwnerLine(trk, owner);
                     }
                 };
+            }
+        }
+        private void SetupTriggers(PropertyTree tree)
+        {
+            if (_ownerline is StandardLine physline)
+            {
+                var table = tree.Add("Triggers", 120);
+                var currenttrigger = physline.Trigger;
+                var triggerenabled = GwenHelper.AddPropertyCheckbox(
+                    table,
+                    "Enabled",
+                    currenttrigger != null);
+
+                var zoom = new NumberProperty(table)
+                {
+                    Min = Constants.MinimumZoom,
+                    Max = Constants.MaxZoom,
+                    NumberValue = 4
+                };
+                table.Add("Target Zoom", zoom);
+                var frames = new NumberProperty(table)
+                {
+                    Min = 0,
+                    Max = 40 * 60 * 2,//2 minutes is enough for a zoom trigger, you crazy nuts.
+                    NumberValue = 40,
+                    OnlyWholeNumbers = true,
+                };
+                if (currenttrigger != null)
+                {
+                    zoom.NumberValue = currenttrigger.ZoomTarget;
+                    frames.NumberValue = currenttrigger.ZoomFrames;
+                }
+                table.Add("Frames", frames);
+                zoom.ValueChanged += (o, e) =>
+                {
+                    using (var trk = _editor.CreateTrackWriter())
+                    {
+                        trk.DisableExtensionUpdating();
+                        if (triggerenabled.IsChecked)
+                        {
+                            var cpy = (StandardLine)_ownerline.Clone();
+                            cpy.Trigger.ZoomTarget = (float)zoom.NumberValue;
+                            UpdateOwnerLine(trk, cpy);
+                        }
+                    }
+                };
+                frames.ValueChanged += (o, e) =>
+                {
+                    using (var trk = _editor.CreateTrackWriter())
+                    {
+                        trk.DisableExtensionUpdating();
+                        if (triggerenabled.IsChecked)
+                        {
+                            var cpy = (StandardLine)_ownerline.Clone();
+                            cpy.Trigger.ZoomFrames = (int)frames.NumberValue;
+                            UpdateOwnerLine(trk, cpy);
+                        }
+                    }
+                };
+                triggerenabled.ValueChanged += (o, e) =>
+                {
+                    using (var trk = _editor.CreateTrackWriter())
+                    {
+                        trk.DisableExtensionUpdating();
+                        var cpy = (StandardLine)_ownerline.Clone();
+                        if (triggerenabled.IsChecked)
+                        {
+                            cpy.Trigger = new LineTrigger()
+                            {
+                                ZoomTrigger = true,
+                                ZoomFrames = (int)frames.NumberValue,
+                                ZoomTarget = (float)zoom.NumberValue
+                            };
+
+                            UpdateOwnerLine(trk, cpy);
+                        }
+                        else
+                        {
+                            cpy.Trigger = null;
+                            UpdateOwnerLine(trk, cpy);
+                        }
+                    }
+                };
+            }
+        }
+
+        private void ChangeAngle(double numberValue)
+        {
+            using (var trk = _editor.CreateTrackWriter())
+            {
+                var cpy = _ownerline.Clone();
+
+                UpdateOwnerLine(trk, cpy);
+            }
+        }
+
+        private void ChangeWidth(double width)
+        {
+            using (var trk = _editor.CreateTrackWriter())
+            {
+                var cpy = _ownerline.Clone();
+                cpy.Width = (float)width;
+                UpdateOwnerLine(trk, cpy);
+            }
+        }
+
+        private void ChangeID(int newID)
+        {
+            //TODO
+        }
+
+        private void ChangeLength(double lengh)
+        {
+            using (var trk = _editor.CreateTrackWriter())
+            {
+                var cpy = _ownerline.Clone();
+
+                UpdateOwnerLine(trk, cpy);
             }
         }
 
@@ -216,49 +408,71 @@ namespace linerider.UI
         }
         private SimulationCell GetMultiLines(bool includeowner)
         {
-            SimulationCell redlines = new SimulationCell();
+            SimulationCell multilines = new SimulationCell();
             using (var trk = _editor.CreateTrackReader())
             {
                 var owner = (StandardLine)_ownerline;
                 var lines = trk.GetLinesInRect(new Utils.DoubleRect(owner.Position, new Vector2d(1, 1)), false);
-                foreach (var red in lines)
+                foreach (var line in lines)
                 {
                     if (
-                        red is RedLine stl &&
-                        red.Position == owner.Position &&
-                        red.Position2 == owner.Position2 &&
-                        (includeowner || red.ID != owner.ID))
+                        line is RedLine stl &&
+                        owner is RedLine stls &&
+                        line.Position == owner.Position &&
+                        line.Position2 == owner.Position2 &&
+                        (includeowner || line.ID != owner.ID))
                     {
-                        redlines.AddLine(stl);
+                        multilines.AddLine(stl);
+                    }
+                    if (
+                        line is StandardLine stlstd &&
+                        owner is StandardLine stlstds &&
+                        line.Position == owner.Position &&
+                        line.Position2 == owner.Position2 &&
+                        (includeowner || line.ID != owner.ID))
+                    {
+                        multilines.AddLine(stlstd);
                     }
                 }
             }
-            return redlines;
+            return multilines;
         }
         private void Multiline(int count)
         {
-            SimulationCell redlines = GetMultiLines(false);
+            SimulationCell multilines = GetMultiLines(false);
             using (var trk = _editor.CreateTrackWriter())
             {
                 var owner = (StandardLine)_ownerline;
                 MakingChange();
                 // owner line doesn't count, but our min bounds is 1
-                var diff = (count - 1) - redlines.Count;
+                var diff = (count - 1) - multilines.Count;
                 if (diff < 0)
                 {
                     for (int i = 0; i > diff; i--)
                     {
-                        trk.RemoveLine(redlines.First());
-                        redlines.RemoveLine(redlines.First().ID);
+                        trk.RemoveLine(multilines.First());
+                        multilines.RemoveLine(multilines.First().ID);
                     }
                 }
                 else if (diff > 0)
                 {
-                    for (int i = 0; i < diff; i++)
+                    if (_ownerline is RedLine redline)
                     {
-                        var red = new RedLine(owner.Position, owner.Position2, owner.inv) { Multiplier = ((RedLine)owner).Multiplier };
-                        red.CalculateConstants();
-                        trk.AddLine(red);
+                        for (int i = 0; i < diff; i++)
+                        {
+                            var red = new RedLine(owner.Position, owner.Position2, owner.inv) { Multiplier = ((RedLine)owner).Multiplier };
+                            red.CalculateConstants();
+                            trk.AddLine(red);
+                        }
+                    }
+                    else if (_ownerline is StandardLine blueline)
+                    {
+                        for (int i = 0; i < diff; i++)
+                        {
+                            var blue = new StandardLine(owner.Position, owner.Position2, owner.inv);
+                            blue.CalculateConstants();
+                            trk.AddLine(blue);
+                        }
                     }
                 }
             }

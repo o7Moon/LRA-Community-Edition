@@ -115,7 +115,8 @@ namespace linerider
         /// </summary>
         public Rider TickBasic(Rider state, int maxiteration = 6)
         {
-            return state.Simulate(_track.Grid, _track.Bones, null, maxiteration);
+            int trig = 0;
+            return state.Simulate(_track.Grid, _track.Bones, ref trig, null, maxiteration);
         }
         public string SaveTrackTrk(string savename)
         {

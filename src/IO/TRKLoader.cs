@@ -283,7 +283,7 @@ namespace linerider.IO
                     var nxtID = -1;
                     var multiplier = 1;
                     var linewidth = 1f;
-                    LineTrigger tr = null;
+                    LineTrigger tr = ignorabletrigger ? new LineTrigger() : null;
                     if (redmultipier)
                     {
                         if (lt == LineType.Red)
@@ -342,6 +342,7 @@ namespace linerider.IO
                             bl.ID = ID;
                             bl.Extension = (StandardLine.Ext)lim;
                             l = bl;
+                            bl.Trigger = tr;
                             break;
 
                         case LineType.Red:
@@ -376,7 +377,7 @@ namespace linerider.IO
                         ret.AddLine(l);
                     }
                 }
-                ret.Triggers = TriggerConverter.ConvertTriggers(linetriggers, ret);
+
                 if (br.BaseStream.Position != br.BaseStream.Length)
                 {
                     var meta = br.ReadInt32();

@@ -46,6 +46,7 @@ namespace linerider.IO
             }
             var sort = trk.GetSortedLines();
             trackobj.linesArray = new object[sort.Length][];
+            trackobj.triggers = new List<track_json.zoomtrigger_json>();
             trackobj.gameTriggers = new List<track_json.gametrigger_json>();
             int idx = 0;
             foreach (var line in sort)
@@ -79,6 +80,16 @@ namespace linerider.IO
                     if (line is RedLine red)
                     {
                         jline.multiplier = red.Multiplier;
+                    }
+                    if (stl.Trigger != null && stl.Trigger.ZoomTrigger)
+                    {
+                        trackobj.triggers.Add(new track_json.zoomtrigger_json()
+                        {
+                            zoom = true,
+                            ID = jline.id,
+                            target = stl.Trigger.ZoomTarget,
+                            frames = stl.Trigger.ZoomFrames
+                        });
                     }
                 }
                 trackobj.linesArray[idx++] = line_to_linearrayline(jline);

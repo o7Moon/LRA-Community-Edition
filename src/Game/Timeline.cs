@@ -36,6 +36,8 @@ namespace linerider.Game
         {
             public Rider Rider;
             public float Zoom;
+            public int TriggerLineID;
+            public int TriggerHitFrame;
             public Color4 BGColor;
             public Color LineColor;
         }
@@ -98,7 +100,9 @@ namespace linerider.Game
                 _frames.Clear();
                 _frames.Add(new frameinfo() { 
                     Rider = state, 
-                    Zoom = zoom, 
+                    Zoom = zoom,
+                    TriggerHitFrame = -1,
+                    TriggerLineID = -1,
                     BGColor = new Color4((byte)_track.BGColorR, (byte)_track.BGColorG, (byte)_track.BGColorB, (byte)255),
                     LineColor = Color.FromArgb(255, _track.LineColorR, _track.LineColorG, _track.LineColorB),
                 });
@@ -159,9 +163,11 @@ namespace linerider.Game
             bool isiteration = iteration != 6 && frame > 0;
             if (iteration != 6 && frame > 0)
             {
+                int trig = 0;
                 return GetFrame(frame - 1).Simulate(
                         _track.Grid,
                         _track.Bones,
+                        ref trig,
                         null,
                         iteration,
                         frameid: frame);
@@ -221,6 +227,21 @@ namespace linerider.Game
                     ret[i] = GetFrame(framestart + i);
                 }
                 return ret;
+            }
+        }
+        public void TriggerChanged(GameLine line) 
+        {
+            int framehit;
+            using (_framesync.AcquireWrite())
+            {
+                framehit = _hittest.GetHitFrame(line.ID);
+            }
+            if (framehit != -1)
+            {
+                using (changesync.AcquireWrite())
+                {
+                    _first_invalid_frame = Math.Min(framehit, _first_invalid_frame);
+                }
             }
         }
         public bool IsFrameUniqueCollision(int frame)
@@ -307,12 +328,31 @@ namespace linerider.Game
                 {
                     int currentframe = start + i;
                     var collisions = new LinkedList<int>();
+                    var oldtrigid = current.TriggerLineID;
                     current.Rider = current.Rider.Simulate(
                         _savedcells,
                         bones,
+                        ref current.TriggerLineID,
                         collisions,
                         frameid: currentframe);
-                    if (GetTriggersForFrame(triggers, currentframe))
+                    if (current.TriggerLineID != oldtrigid)
+                    {
+                        current.TriggerHitFrame = currentframe;
+                    }
+                    if (current.TriggerLineID != -1)
+                    {
+                        var std = (StandardLine)_track.LineLookup[current.TriggerLineID];
+                        Debug.Assert(std.Trigger != null, "Trigger line proc on line with no trigger");
+                        var delta = currentframe - current.TriggerHitFrame;
+                        if (!std.Trigger.Activate(delta, ref current.Zoom))
+                        {
+                            current.TriggerLineID = -1;
+                            current.TriggerHitFrame = -1;
+                        }
+                    }
+
+
+                        if (GetTriggersForFrame(triggers, currentframe))
                     {
                         var zoomtrigger = triggers[(int)TriggerType.Zoom];
                         if (zoomtrigger != null)
