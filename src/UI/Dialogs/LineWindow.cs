@@ -24,7 +24,6 @@ namespace linerider.UI
         private bool _linechangemade = false;
         private const string DefaultTitle = "Line Properties";
         private bool closing = false;
-        private Turtle _turtle;
         public LineWindow(GameCanvas parent, Editor editor, GameLine line) : base(parent, editor)
         {
             _ownerline = line;
@@ -39,7 +38,6 @@ namespace linerider.UI
             };
             _proptree.Dock = Dock.Top;
             MakeModal(true);
-            _turtle = new Turtle(_ownerline.Position); //Thank you Sam for the help
             Setup();
             _proptree.ExpandAll();
         }
@@ -150,14 +148,14 @@ namespace linerider.UI
                 };
                 id.ValueChanged += (o, e) =>
                 {
-                    ChangeID((int)id.NumberValue); //TODO
+                    ChangeID((int)id.NumberValue);
                 };
                 lineProp.Add("ID", id);
             }
 
             _length = new NumberProperty(lineProp)
             {
-                Min = double.MinValue + 1,
+                Min = 0.0000001,
                 Max = double.MaxValue - 1,
                 NumberValue = len,
             };
@@ -340,11 +338,27 @@ namespace linerider.UI
 
         private void ChangeAngle(double numberValue)
         {
+            var multilines = GetMultiLines(false);
             using (var trk = _editor.CreateTrackWriter())
             {
                 var cpy = _ownerline.Clone();
 
+
+                var angle = Angle.FromDegrees(numberValue - 90).Radians - Angle.FromVector(cpy.GetVector()).Radians;
+                var ads = Angle.FromRadians(angle).Degrees;
+                var newX = ((cpy.Position2.X - cpy.Position.X) * Math.Cos(angle)) - ((cpy.Position2.Y - cpy.Position.Y) * Math.Sin(angle)) + cpy.Position.X;
+                var newY = ((cpy.Position2.Y - cpy.Position.Y) * Math.Cos(angle)) + ((cpy.Position2.X - cpy.Position.X) * Math.Sin(angle)) + cpy.Position.Y;
+                var newPos = new Vector2d(newX, newY);
+                cpy.Position2 = newPos;
                 UpdateOwnerLine(trk, cpy);
+
+
+                foreach (var line in multilines)
+                {
+                    var copy = line.Clone();
+                    copy.Position2 = newPos;
+                    UpdateLine(trk, line, copy);
+                }
             }
         }
 
@@ -360,16 +374,32 @@ namespace linerider.UI
 
         private void ChangeID(int newID)
         {
-            //TODO
+
         }
 
-        private void ChangeLength(double lengh)
+        private void ChangeLength(double length)
         {
+            var multilines = GetMultiLines(false);
             using (var trk = _editor.CreateTrackWriter())
             {
                 var cpy = _ownerline.Clone();
+                var angle = Angle.FromVector(cpy.GetVector()).Radians;
 
+                var x2 = cpy.Position.X + (length * Math.Cos(angle));
+                var y2 = cpy.Position.Y + (length * Math.Sin(angle));
+
+                var newPos = new Vector2d(x2, y2);
+                cpy.Position2 = newPos;
                 UpdateOwnerLine(trk, cpy);
+
+                //System.Diagnostics.Debug.WriteLine(Angle.FromVector(cpy.GetVector()).Degrees);
+
+                foreach (var line in multilines)
+                {
+                    var copy = line.Clone();
+                    copy.Position2 = newPos;
+                    UpdateLine(trk, line, copy);
+                }
             }
         }
 
@@ -411,7 +441,7 @@ namespace linerider.UI
             SimulationCell multilines = new SimulationCell();
             using (var trk = _editor.CreateTrackReader())
             {
-                var owner = (StandardLine)_ownerline;
+                var owner = _ownerline;
                 var lines = trk.GetLinesInRect(new Utils.DoubleRect(owner.Position, new Vector2d(1, 1)), false);
                 foreach (var line in lines)
                 {
