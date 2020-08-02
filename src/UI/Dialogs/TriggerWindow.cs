@@ -36,7 +36,12 @@ namespace linerider.UI
         private Spinner _linered;
         private Spinner _linegreen;
         private Spinner _lineblue;
-        
+
+        private ControlBase _cameraoffsetoptions;
+        private Spinner _camerapixeloffsetx;
+        private Spinner _camerapixeloffsety;
+
+
         private int SliderFrames
         {
             get
@@ -329,6 +334,58 @@ namespace linerider.UI
             GwenHelper.CreateLabeledControl(_lineoptions, "Line Green", _linegreen).Dock = Dock.Bottom;
             GwenHelper.CreateLabeledControl(_lineoptions, "Line Red", _lineblue).Dock = Dock.Bottom;
         }
+        private void SetupCameraOffset()
+        {
+            _cameraoffsetoptions = new ControlBase(null)
+            {
+                Margin = new Margin(0, 0, 0, 0),
+                Dock = Dock.Fill
+            };
+            _camerapixeloffsetx = new Spinner(null)
+            {
+                Min = int.MinValue,
+                Max = int.MaxValue,
+                Value = 0,
+            };
+            _camerapixeloffsety = new Spinner(null)
+            {
+                Min = int.MinValue,
+                Max = int.MaxValue,
+                Value = 0,
+            };
+            _camerapixeloffsetx.ValueChanged += (o, e) =>
+            {
+                if (_selecting_trigger)
+                    return;
+                using (var trk = _editor.CreateTrackWriter())
+                {
+                    var trigger = BeginModifyTrigger(trk);
+                    if (trigger != null)
+                    {
+                        trigger.XOffsetInPixels = (float)_camerapixeloffsetx.Value;
+                        trigger.YOffsetInPixels = (float)_camerapixeloffsety.Value;
+                        EndModifyTrigger(trigger, trk);
+                    }
+                }
+            };
+            _camerapixeloffsety.ValueChanged += (o, e) =>
+            {
+                if (_selecting_trigger)
+                    return;
+                using (var trk = _editor.CreateTrackWriter())
+                {
+                    var trigger = BeginModifyTrigger(trk);
+                    if (trigger != null)
+                    {
+                        trigger.XOffsetInPixels = (float)_camerapixeloffsetx.Value;
+                        trigger.YOffsetInPixels = (float)_camerapixeloffsety.Value;
+                        EndModifyTrigger(trigger, trk);
+                    }
+                }
+            };
+            GwenHelper.CreateLabeledControl(_cameraoffsetoptions, "Y Offset in Pixels:", _camerapixeloffsety).Dock = Dock.Bottom;
+            GwenHelper.CreateLabeledControl(_cameraoffsetoptions, "X Offset in Pixels:", _camerapixeloffsetx).Dock = Dock.Bottom;
+        }
         private void SetupRight()
         {
             ControlBase rightcontainer = new ControlBase(this)
@@ -385,6 +442,7 @@ namespace linerider.UI
             SetupZoom();
             SetupBG();
             SetupLine();
+            SetupCameraOffset();
 
             _zoomoptions.Parent = _triggeroptions;
             _triggertype = GwenHelper.CreateLabeledCombobox(
@@ -415,6 +473,14 @@ namespace linerider.UI
                 _lineoptions.Parent = _triggeroptions;
                 triggerSelected = TriggerType.LineColor;
                 Debug.WriteLine("Changed to Line");
+            };
+            var cameraoffset = _triggertype.AddItem("Camera Offset", "", TriggerType.CameraOffset);
+            cameraoffset.Selected += (o, e) =>
+            {
+                _triggeroptions.Children.Clear();
+                triggerSelected = TriggerType.CameraOffset;
+                _cameraoffsetoptions.Parent = _triggeroptions;
+                Debug.WriteLine("Changed to Camera Offset");
             };
             _triggertype.SelectedItem = zoom;
         }
@@ -466,7 +532,7 @@ namespace linerider.UI
             add.Clicked += (o, e) =>
             {
                 GameTrigger trigger = null;
-                switch (triggerSelected)
+                 switch (triggerSelected)
                 {
                     case (TriggerType.Zoom):
                         _triggeroptions.Children.Clear();
@@ -476,7 +542,7 @@ namespace linerider.UI
                             TriggerType = TriggerType.Zoom,
                             Start = _editor.Offset,
                             End = _editor.Offset + 40,
-                            ZoomTarget = 4,
+                            ZoomTarget = (float)_zoomtarget.Value,
                         };
 
                         break;
@@ -486,9 +552,9 @@ namespace linerider.UI
                             TriggerType = TriggerType.BGChange,
                             Start = _editor.Offset,
                             End = _editor.Offset + 40,
-                            backgroundRed = 255,
-                            backgroundGreen = 255,
-                            backgroundBlue = 255,
+                            backgroundRed = (int)_backgrondred.Value,
+                            backgroundGreen = (int)_backgrondgreen.Value,
+                            backgroundBlue = (int)_backgrondblue.Value,
                         };
                         break;
                     case (TriggerType.LineColor):
@@ -497,9 +563,19 @@ namespace linerider.UI
                             TriggerType = TriggerType.LineColor,
                             Start = _editor.Offset,
                             End = _editor.Offset + 40,
-                            lineRed = 255,
-                            lineGreen = 255,
-                            lineBlue = 255,
+                            lineRed = (int)_linered.Value,
+                            lineGreen = (int)_linegreen.Value,
+                            lineBlue = (int)_lineblue.Value,
+                        };
+                        break;
+                    case TriggerType.CameraOffset:
+                        trigger = new GameTrigger()
+                        {
+                            TriggerType = TriggerType.CameraOffset,
+                            Start = _editor.Offset,
+                            End = _editor.Offset + 40,
+                            XOffsetInPixels = (float)_camerapixeloffsetx.Value,
+                            YOffsetInPixels = (float)_camerapixeloffsety.Value,
                         };
                         break;
                     default: //Default to the zoom trigger if something goes wrong
@@ -633,30 +709,39 @@ namespace linerider.UI
                     case TriggerType.Zoom:
                         _triggeroptions.Children.Clear();
                         _zoomoptions.Parent = _triggeroptions;
+                        triggerSelected = TriggerType.Zoom;
                         Debug.WriteLine("Changed to Zoom");
 
                         _zoomtarget.Value = trigger.ZoomTarget;
-                        triggerSelected = TriggerType.Zoom;
                         break;
                     case TriggerType.BGChange:
                         _triggeroptions.Children.Clear();
                         _bgoptions.Parent = _triggeroptions;
+                        triggerSelected = TriggerType.BGChange;
                         Debug.WriteLine("Changed to Background");
 
                         _backgrondred.Value = trigger.backgroundRed;
                         _backgrondgreen.Value = trigger.backgroundGreen;
                         _backgrondblue.Value = trigger.backgroundBlue;
-                        triggerSelected = TriggerType.BGChange;
                         break;
                     case TriggerType.LineColor:
                         _triggeroptions.Children.Clear();
                         _lineoptions.Parent = _triggeroptions;
+                        triggerSelected = TriggerType.LineColor;
                         Debug.WriteLine("Changed to Line");
 
                         _linered.Value = trigger.lineRed;
                         _linegreen.Value = trigger.lineGreen;
                         _lineblue.Value = trigger.lineBlue;
-                        triggerSelected = TriggerType.LineColor;
+                        break;
+                    case TriggerType.CameraOffset:
+                        _triggeroptions.Children.Clear();
+                        _cameraoffsetoptions.Parent = _triggeroptions;
+                        triggerSelected = TriggerType.CameraOffset;
+                        Debug.WriteLine("Changed to Camera Offset");
+
+                        _camerapixeloffsetx.Value = trigger.XOffsetInPixels;
+                        _camerapixeloffsety.Value = trigger.YOffsetInPixels;
                         break;
                     /* Add more triggers here */
                     default:
@@ -716,6 +801,9 @@ namespace linerider.UI
                     break;
                 case TriggerType.LineColor:
                     typelabel = "[Line Color]";
+                    break;
+                case TriggerType.CameraOffset:
+                    typelabel = "[Camera Offset]";
                     break;
                 default:
                     typelabel = "[No Name Found]";

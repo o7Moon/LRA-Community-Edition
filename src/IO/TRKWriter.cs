@@ -198,6 +198,14 @@ namespace linerider.IO
                             triggerstring.Append(t.lineBlue.ToString(Program.Culture));
                             triggerstring.Append(":");
                             break;
+                        case TriggerType.CameraOffset:
+                            triggerstring.Append((int)TriggerType.CameraOffset);
+                            triggerstring.Append(":");
+                            triggerstring.Append(t.XOffsetInPixels.ToString(Program.Culture));
+                            triggerstring.Append(":");
+                            triggerstring.Append(t.YOffsetInPixels.ToString(Program.Culture));
+                            triggerstring.Append(":");
+                            break;
                     }
                     triggerstring.Append(t.Start.ToString(Program.Culture));
                     triggerstring.Append(":");

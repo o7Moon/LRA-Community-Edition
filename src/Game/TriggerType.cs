@@ -25,5 +25,6 @@ namespace linerider.Game
         Zoom = 0,
         BGChange = 1,
         LineColor = 2,
+        CameraOffset = 3,
     }
 }

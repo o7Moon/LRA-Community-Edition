@@ -158,6 +158,16 @@ namespace linerider.IO
                                 lineBlue = t.lineBlue,
                             });
                             break;
+                        case TriggerType.CameraOffset:
+                            ret.Triggers.Add(new GameTrigger()
+                            {
+                                Start = t.start,
+                                End = t.end,
+                                TriggerType = ttype,
+                                XOffsetInPixels = t.XOffsetInPixels,
+                                YOffsetInPixels = t.YOffsetInPixels,
+                            });
+                            break;
                     }
                 }
             }

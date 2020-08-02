@@ -25,7 +25,7 @@ namespace linerider.Game
 {
     public class GameTrigger
     {
-        public const int TriggerTypes = 3;
+        public const int TriggerTypes = 4;
         public int Start;
         public int End;
         public TriggerType TriggerType;
@@ -39,6 +39,9 @@ namespace linerider.Game
         public int lineRed;
         public int lineGreen;
         public int lineBlue;
+        //Camera Offset
+        public float XOffsetInPixels = 0;
+        public float YOffsetInPixels = 0;
 
         public bool CompareTo(GameTrigger other)
         {

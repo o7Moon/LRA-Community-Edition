@@ -23,6 +23,8 @@ namespace linerider.IO.json
             public int lineRed = -999;
             public int lineGreen = -999;
             public int lineBlue = -999;
+            public float XOffsetInPixels = -999;
+            public float YOffsetInPixels = -999;
         }
         public class point_json
         {

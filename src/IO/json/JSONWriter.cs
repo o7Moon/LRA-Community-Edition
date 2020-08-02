@@ -129,6 +129,16 @@ namespace linerider.IO
                             end = trigger.End
                         });
                         break;
+                    case TriggerType.CameraOffset:
+                        trackobj.gameTriggers.Add(new track_json.gametrigger_json()
+                        {
+                            triggerType = (int)trigger.TriggerType,
+                            XOffsetInPixels = trigger.XOffsetInPixels,
+                            YOffsetInPixels = trigger.YOffsetInPixels,
+                            start = trigger.Start,
+                            end = trigger.End
+                        });
+                        break;
                 }
             }
             var dir = TrackIO.GetTrackDirectory(trk);

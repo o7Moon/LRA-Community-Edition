@@ -162,6 +162,20 @@ namespace linerider.IO
                                         lineBlue = lineblue,
                                     };
                                     break;
+                                case TriggerType.CameraOffset:
+                                    var XOffsetInPixels = ParseInt(tdata[1]);
+                                    var YOffsetInPixels = ParseInt(tdata[2]);
+                                    start = ParseInt(tdata[3]);
+                                    end = ParseInt(tdata[4]);
+                                    newtrigger = new GameTrigger()
+                                    {
+                                        Start = start,
+                                        End = end,
+                                        TriggerType = TriggerType.CameraOffset,
+                                        XOffsetInPixels = XOffsetInPixels,
+                                        YOffsetInPixels = YOffsetInPixels,
+                                    };
+                                    break;
                                 default:
                                     throw new TrackIO.TrackLoadException(
                                         "Unsupported trigger type");
