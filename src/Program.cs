@@ -95,7 +95,10 @@ namespace linerider
             if (!_crashed)
             {
                 _crashed = true;
-                glGame.Track.BackupTrack();
+                if (glGame != null)
+                {
+                    glGame.Track.BackupTrack();
+                }
             }
             if (System.Windows.Forms.MessageBox.Show(
                 "Unhandled Exception: " +
@@ -157,6 +160,9 @@ namespace linerider
                 Directory.CreateDirectory(UserDirectory + "Riders");
             if (!Directory.Exists(UserDirectory + "Scarves"))
                 Directory.CreateDirectory(UserDirectory + "Scarves");
+            if (!Directory.Exists(UserDirectory + "Configs"))
+                Directory.CreateDirectory(UserDirectory + "Configs");
+
 
             Random = new Random();
             GameResources.Init();

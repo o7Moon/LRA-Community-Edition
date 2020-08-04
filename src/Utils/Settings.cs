@@ -34,6 +34,9 @@ namespace linerider
 {
     static class Settings
     {
+        private const string defaultSettingsFile = "settings-LRT.conf";
+        private const string defaultHotkeysFile = "hotkeys-LRT.conf";
+
         public static class Recording
         {
             public static bool ShowTools = false;
@@ -233,7 +236,7 @@ namespace linerider
             }
             LoadDefaultKeybindings();
         }
-        private static void SetupDefaultKeybinds()
+            private static void SetupDefaultKeybinds()
         {
             SetupDefaultKeybind(Hotkey.EditorPencilTool, new Keybinding(Key.Q));
             SetupDefaultKeybind(Hotkey.EditorLineTool, new Keybinding(Key.W));
@@ -324,6 +327,17 @@ namespace linerider
             SetupDefaultKeybind(Hotkey.SaveAsWindow, new Keybinding(Key.S, KeyModifiers.Control | KeyModifiers.Shift));
             SetupDefaultKeybind(Hotkey.DrawDebugCamera, new Keybinding(Key.Period));
             SetupDefaultKeybind(Hotkey.DrawDebugGrid, new Keybinding(Key.Comma));
+
+            SetupDefaultKeybind(Hotkey.SettingConf1, new Keybinding(Key.Number1, KeyModifiers.Control | KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.SettingConf2, new Keybinding(Key.Number2, KeyModifiers.Control | KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.SettingConf3, new Keybinding(Key.Number3, KeyModifiers.Control | KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.SettingConf4, new Keybinding(Key.Number4, KeyModifiers.Control | KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.SettingConf5, new Keybinding(Key.Number5, KeyModifiers.Control | KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.SettingConf6, new Keybinding(Key.Number6, KeyModifiers.Control | KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.SettingConf7, new Keybinding(Key.Number7, KeyModifiers.Control | KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.SettingConf8, new Keybinding(Key.Number8, KeyModifiers.Control | KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.SettingConf9, new Keybinding(Key.Number9, KeyModifiers.Control | KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.SettingConf10, new Keybinding(Key.Number0, KeyModifiers.Control | KeyModifiers.Shift));
         }
         private static void SetupDefaultKeybind(Hotkey hotkey, Keybinding keybinding, Keybinding secondary = null)
         {
@@ -405,16 +419,21 @@ namespace linerider
             }
             return Hotkey.None;
         }
-        public static void Load()
+        public static void Load(string settingsfile = defaultSettingsFile, string hotkeyfile = defaultHotkeysFile)
         {
             string[] lines = null;
+            string[] linesHotkeys = null;
             try
             {
-                if (!File.Exists(Program.UserDirectory + "settings-LRT.conf"))
+                if (!File.Exists(Program.UserDirectory + settingsfile) || !File.Exists(Program.UserDirectory + hotkeyfile))
                 {
-                    Save();
+                    Save(settingsfile, defaultHotkeysFile);
                 }
-                lines = File.ReadAllLines(Program.UserDirectory + "settings-LRT.conf");
+                lines = File.ReadAllLines(Program.UserDirectory + settingsfile);
+                linesHotkeys = File.ReadAllLines(Program.UserDirectory + hotkeyfile);
+                string[] newline = { "\n" };
+                lines = lines.Union(newline).ToArray();
+                lines = lines.Union(linesHotkeys).ToArray(); //Add the hotkeys so they get loaded
             }
             catch
             {
@@ -496,68 +515,69 @@ namespace linerider
             Volume = MathHelper.Clamp(Settings.Volume, 0, 100);
             LoadDefaultKeybindings();
         }
-        public static void Save()
+        public static void Save(string settingsfile = defaultSettingsFile, string hotkeyfile = defaultHotkeysFile)
         {
-            string config = MakeSetting(nameof(LastSelectedTrack), LastSelectedTrack);
-            config += "\r\n" + MakeSetting(nameof(Volume), Volume.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(SuperZoom), SuperZoom.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(WhiteBG), WhiteBG.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(NightMode), NightMode.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(SmoothCamera), SmoothCamera.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(PredictiveCamera), PredictiveCamera.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(CheckForUpdates), CheckForUpdates.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(SmoothPlayback), SmoothPlayback.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(PlaybackZoomType), PlaybackZoomType.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(PlaybackZoomValue), PlaybackZoomValue.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(RoundLegacyCamera), RoundLegacyCamera.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Record1080p), Record1080p.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(RecordSmooth), RecordSmooth.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(RecordMusic), RecordMusic.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(ScrollSensitivity), ScrollSensitivity.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.LifeLockNoFakie), Editor.LifeLockNoFakie.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.LifeLockNoOrange), Editor.LifeLockNoOrange.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(SettingsPane), SettingsPane.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(MuteAudio), MuteAudio.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.HitTest), Editor.HitTest.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.SnapNewLines), Editor.SnapNewLines.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.SnapMoveLine), Editor.SnapMoveLine.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.ForceXySnap), Editor.ForceXySnap.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.MomentumVectors), Editor.MomentumVectors.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.RenderGravityWells), Editor.RenderGravityWells.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.DrawContactPoints), Editor.DrawContactPoints.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(PreviewMode), PreviewMode.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(SlowmoSpeed), SlowmoSpeed.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(DefaultPlayback), DefaultPlayback.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(ColorPlayback), ColorPlayback.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(OnionSkinning), OnionSkinning.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.ShowLineAngle), Editor.ShowLineAngle.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.ShowLineLength), Editor.ShowLineLength.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(Editor.ShowLineID), Editor.ShowLineID.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(SelectedScarf), SelectedScarf);
-            config += "\r\n" + MakeSetting(nameof(ScarfSegments), ScarfSegments.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(SelectedBoshSkin), SelectedBoshSkin);
-            config += "\r\n" + MakeSetting(nameof(customScarfOnPng), customScarfOnPng.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(discordActivityEnabled), discordActivityEnabled.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(discordActivity1), discordActivity1);
-            config += "\r\n" + MakeSetting(nameof(discordActivity2), discordActivity2);
-            config += "\r\n" + MakeSetting(nameof(discordActivity3), discordActivity3);
-            config += "\r\n" + MakeSetting(nameof(discordActivity4), discordActivity4);
-            config += "\r\n" + MakeSetting(nameof(largeImageKey), largeImageKey);
-            config += "\r\n" + MakeSetting(nameof(showChangelog), showChangelog.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(multiScarfSegments), multiScarfSegments.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(multiScarfAmount), multiScarfAmount.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(autosaveChanges), autosaveChanges.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(autosaveMinutes), autosaveMinutes.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(mainWindowWidth), mainWindowWidth.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(mainWindowHeight), mainWindowHeight.ToString(Program.Culture));
-            config += "\r\n" + MakeSetting(nameof(DefaultSaveFormat), DefaultSaveFormat);
-            config += "\r\n" + MakeSetting(nameof(DefaultAutosaveFormat), DefaultAutosaveFormat);
-            config += "\r\n" + MakeSetting(nameof(DefaultQuicksaveFormat), DefaultQuicksaveFormat);
-            config += "\r\n" + MakeSetting(nameof(DefaultCrashBackupFormat), DefaultCrashBackupFormat);
-            config += "\r\n" + MakeSetting(nameof(LastSongSearch), LastSongSearch);
-            config += "\r\n" + MakeSetting(nameof(LastSongSearchType), LastSongSearchType);
-            config += "\r\n" + MakeSetting(nameof(LastTrackSearch), LastTrackSearch);
-            config += "\r\n" + MakeSetting(nameof(LastTrackSearchType), LastTrackSearchType);
+            string configHotkeys = "";
+            string configSettings = MakeSetting(nameof(LastSelectedTrack), LastSelectedTrack);
+            configSettings += "\r\n" + MakeSetting(nameof(Volume), Volume.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(SuperZoom), SuperZoom.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(WhiteBG), WhiteBG.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(NightMode), NightMode.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(SmoothCamera), SmoothCamera.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(PredictiveCamera), PredictiveCamera.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(CheckForUpdates), CheckForUpdates.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(SmoothPlayback), SmoothPlayback.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(PlaybackZoomType), PlaybackZoomType.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(PlaybackZoomValue), PlaybackZoomValue.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(RoundLegacyCamera), RoundLegacyCamera.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Record1080p), Record1080p.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(RecordSmooth), RecordSmooth.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(RecordMusic), RecordMusic.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(ScrollSensitivity), ScrollSensitivity.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.LifeLockNoFakie), Editor.LifeLockNoFakie.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.LifeLockNoOrange), Editor.LifeLockNoOrange.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(SettingsPane), SettingsPane.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(MuteAudio), MuteAudio.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.HitTest), Editor.HitTest.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.SnapNewLines), Editor.SnapNewLines.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.SnapMoveLine), Editor.SnapMoveLine.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.ForceXySnap), Editor.ForceXySnap.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.MomentumVectors), Editor.MomentumVectors.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.RenderGravityWells), Editor.RenderGravityWells.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.DrawContactPoints), Editor.DrawContactPoints.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(PreviewMode), PreviewMode.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(SlowmoSpeed), SlowmoSpeed.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(DefaultPlayback), DefaultPlayback.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(ColorPlayback), ColorPlayback.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(OnionSkinning), OnionSkinning.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.ShowLineAngle), Editor.ShowLineAngle.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.ShowLineLength), Editor.ShowLineLength.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(Editor.ShowLineID), Editor.ShowLineID.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(SelectedScarf), SelectedScarf);
+            configSettings += "\r\n" + MakeSetting(nameof(ScarfSegments), ScarfSegments.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(SelectedBoshSkin), SelectedBoshSkin);
+            configSettings += "\r\n" + MakeSetting(nameof(customScarfOnPng), customScarfOnPng.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(discordActivityEnabled), discordActivityEnabled.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(discordActivity1), discordActivity1);
+            configSettings += "\r\n" + MakeSetting(nameof(discordActivity2), discordActivity2);
+            configSettings += "\r\n" + MakeSetting(nameof(discordActivity3), discordActivity3);
+            configSettings += "\r\n" + MakeSetting(nameof(discordActivity4), discordActivity4);
+            configSettings += "\r\n" + MakeSetting(nameof(largeImageKey), largeImageKey);
+            configSettings += "\r\n" + MakeSetting(nameof(showChangelog), showChangelog.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(multiScarfSegments), multiScarfSegments.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(multiScarfAmount), multiScarfAmount.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(autosaveChanges), autosaveChanges.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(autosaveMinutes), autosaveMinutes.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(mainWindowWidth), mainWindowWidth.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(mainWindowHeight), mainWindowHeight.ToString(Program.Culture));
+            configSettings += "\r\n" + MakeSetting(nameof(DefaultSaveFormat), DefaultSaveFormat);
+            configSettings += "\r\n" + MakeSetting(nameof(DefaultAutosaveFormat), DefaultAutosaveFormat);
+            configSettings += "\r\n" + MakeSetting(nameof(DefaultQuicksaveFormat), DefaultQuicksaveFormat);
+            configSettings += "\r\n" + MakeSetting(nameof(DefaultCrashBackupFormat), DefaultCrashBackupFormat);
+            configSettings += "\r\n" + MakeSetting(nameof(LastSongSearch), LastSongSearch);
+            configSettings += "\r\n" + MakeSetting(nameof(LastSongSearchType), LastSongSearchType);
+            configSettings += "\r\n" + MakeSetting(nameof(LastTrackSearch), LastTrackSearch);
+            configSettings += "\r\n" + MakeSetting(nameof(LastTrackSearchType), LastTrackSearchType);
 
             foreach (var binds in Keybinds)
             {
@@ -582,14 +602,21 @@ namespace linerider
                                 keybind += "+";
                             keybind += bind.MouseButton.ToString();
                         }
-                        config += "\r\n" +
-                            MakeSetting(binds.Key.ToString(), $"[{keybind}]");
+                        if (configHotkeys.Equals(""))
+                        {
+                            configHotkeys += MakeSetting(binds.Key.ToString(), $"[{keybind}]");
+                        }
+                        else
+                        {
+                            configHotkeys += "\r\n" + MakeSetting(binds.Key.ToString(), $"[{keybind}]");
+                        }
                     }
                 }
             }
             try
             {
-                File.WriteAllText(Program.UserDirectory + "settings-LRT.conf", config);
+                File.WriteAllText(Program.UserDirectory + settingsfile, configSettings);
+                File.WriteAllText(Program.UserDirectory + hotkeyfile, configHotkeys); //Save hotkeys
             }
             catch { }
         }
@@ -680,6 +707,16 @@ namespace linerider
             bool val;
             if (bool.TryParse(setting, out val))
                 var = val;
+        }
+
+        public static void LoadFromHotkey(Hotkey hotkey)
+        {
+            string filename = "\\Configs\\" + "Hotkey" + (hotkey.ToString().Substring(11)) + ".conf";
+            if (File.Exists(Program.UserDirectory + filename))
+            {
+                Settings.Load(filename);
+            }
+            Debug.WriteLine(filename);
         }
     }
 }

@@ -1199,6 +1199,48 @@ namespace linerider
                {
                    Track.QuickSave();
                });
+
+
+            InputUtils.RegisterHotkey(Hotkey.SettingConf1, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf1);
+            });
+            InputUtils.RegisterHotkey(Hotkey.SettingConf2, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf2);
+            });
+            InputUtils.RegisterHotkey(Hotkey.SettingConf3, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf3);
+            });
+            InputUtils.RegisterHotkey(Hotkey.SettingConf4, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf4);
+            });
+            InputUtils.RegisterHotkey(Hotkey.SettingConf5, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf5);
+            });
+            InputUtils.RegisterHotkey(Hotkey.SettingConf6, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf6);
+            });
+            InputUtils.RegisterHotkey(Hotkey.SettingConf7, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf7);
+            });
+            InputUtils.RegisterHotkey(Hotkey.SettingConf8, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf8);
+            });
+            InputUtils.RegisterHotkey(Hotkey.SettingConf9, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf9);
+            });
+            InputUtils.RegisterHotkey(Hotkey.SettingConf10, () => true, () =>
+            {
+                Settings.LoadFromHotkey(Hotkey.SettingConf10);
+            });
         }
         private void RegisterEditorHotkeys()
         {

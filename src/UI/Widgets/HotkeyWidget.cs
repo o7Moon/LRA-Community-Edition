@@ -135,6 +135,19 @@ namespace linerider.UI
             AddBinding(misctable, "Open Trigger Menu", Hotkey.TriggerMenuWindow);
             AddBinding(misctable, "Show Debug Grid", Hotkey.DrawDebugGrid);
             AddBinding(misctable, "Show Debug Camera", Hotkey.DrawDebugCamera);
+
+            var conftable = _kbtree.Add("Config Hotkeys", 150);
+            AddBinding(conftable, "Config 1", Hotkey.SettingConf1);
+            AddBinding(conftable, "Config 2", Hotkey.SettingConf2);
+            AddBinding(conftable, "Config 3", Hotkey.SettingConf3);
+            AddBinding(conftable, "Config 4", Hotkey.SettingConf4);
+            AddBinding(conftable, "Config 5", Hotkey.SettingConf5);
+            AddBinding(conftable, "Config 6", Hotkey.SettingConf6);
+            AddBinding(conftable, "Config 7", Hotkey.SettingConf7);
+            AddBinding(conftable, "Config 8", Hotkey.SettingConf8);
+            AddBinding(conftable, "Config 9", Hotkey.SettingConf9);
+            AddBinding(conftable, "Config 10", Hotkey.SettingConf10);
+
             _kbtree.ExpandAll();
         }
         private List<Keybinding> FetchBinding(Hotkey hotkey)

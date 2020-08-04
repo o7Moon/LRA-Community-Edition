@@ -75,7 +75,18 @@ namespace linerider.UI
         DrawDebugGrid,
         DrawDebugCamera,
 
-        PlayButtonIgnoreFlag
+        PlayButtonIgnoreFlag,
+
+        SettingConf1,
+        SettingConf2,
+        SettingConf3,
+        SettingConf4,
+        SettingConf5,
+        SettingConf6,
+        SettingConf7,
+        SettingConf8,
+        SettingConf9,
+        SettingConf10,
     }
 
 }

@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms.VisualStyles;
 using Gwen;
+using Gwen.ControlInternal;
 using Gwen.Controls;
 using linerider.Game;
 using linerider.Tools;
@@ -62,6 +63,10 @@ namespace linerider.UI
                 if (e == DialogResult.OK)
                 {
                     Settings.RestoreDefaultSettings();
+                    if (File.Exists(Program.UserDirectory + "Configs\\Defaults-Override.conf"))
+                    {
+                        Settings.Load("Configs\\Defaults-Override.conf"); //Do this after the reset in case settings are missing
+                    }
                     Settings.Save();
                     _editor.InitCamera();
                     Close();// this is lazy, but i don't want to update the ui
@@ -232,7 +237,7 @@ namespace linerider.UI
 
             var overlay = GwenHelper.CreateHeaderPanel(parent, "Frame Overlay");
             PopulateOverlay(overlay);
-            
+
             onion.Tooltip = "Visualize the rider before/after\nthe current frame.";
             momentum.Tooltip = "Visualize the direction of\nmomentum for each contact point";
             contact.Tooltip = "Visualize the parts of the rider\nthat interact with lines.";
@@ -326,7 +331,7 @@ namespace linerider.UI
                 Max = 999,
                 Value = Settings.Local.TrackOverlayOffset,
             };
-            offset.ValueChanged += (o,e)=>
+            offset.ValueChanged += (o, e) =>
             {
                 Settings.Local.TrackOverlayOffset = (int)offset.Value;
             };
@@ -425,7 +430,7 @@ namespace linerider.UI
                 Settings.mainWindowWidth = (int)((Spinner)o).Value;
                 Settings.Save();
             };
-            GwenHelper.CreateLabeledControl(mainWindowSettings, "Main Window Width (Current: "+ (Program.GetWindowWidth()) + ")", mainWindowWidth); 
+            GwenHelper.CreateLabeledControl(mainWindowSettings, "Main Window Width (Current: " + (Program.GetWindowWidth()) + ")", mainWindowWidth);
             var mainWindowHeight = new Spinner(mainWindowSettings)
             {
                 Min = 1,
@@ -515,6 +520,74 @@ namespace linerider.UI
             defaultAutosaveType.SelectByUserData(Settings.DefaultAutosaveFormat);
             defaultAutosaveType.SelectByUserData(Settings.DefaultCrashBackupFormat);
         }
+
+        private void PopulateConfigs(ControlBase parent)
+        {
+            Text textToExplainStuff = new Text(parent)
+            {
+                String = "In this menu you can save and restore configs.\n" +
+                "\n" +
+                "Hotkey configs are saved as \"Hotkey[Hotkey Slot]\"\n" +
+                "\n" +
+                "The Restore Defaults can also be overwritten with\n" +
+                "a file called \"Defaults-Override\"\n" +
+                "\n" +
+                "NOTE: The .conf will auto be added at the end of the\n" +
+                "filename\n",
+                Dock = Dock.Top,
+                
+            };
+
+            var configsLoadSettingPanel = GwenHelper.CreateHeaderPanel(parent, "Load a Config");
+            var configsSaveSettingPanel = GwenHelper.CreateHeaderPanel(parent, "Save a Config");
+            ComboBox configsCombobox = GwenHelper.CreateLabeledCombobox(configsLoadSettingPanel, "Selected Config:");
+            configsCombobox.Width = 209;
+            string[] configsPaths = Directory.GetFiles(Program.UserDirectory + "\\Configs");
+            foreach (string configNames in configsPaths)
+            {
+                if (configNames.EndsWith(".conf"))
+                {
+                    string name = Path.GetFileName(configNames);
+                    configsCombobox.AddItem(name, name, name);
+                }
+            }
+            Button load = new Button(configsLoadSettingPanel)
+            {
+                Dock = Dock.Right,
+                Margin = new Margin(0,5,0,0),
+                Text = "Load Config"
+            };
+            load.Clicked += (o, e) =>
+            {
+                Settings.Load("\\Configs\\" + configsCombobox.SelectedItem.UserData);
+                Settings.Save();
+                _editor.InitCamera();
+                Close(); //"this is lazy, but i don't want to update the ui" Same tbh
+            };
+
+            Text textname = new Text(configsSaveSettingPanel)
+            {
+                String = "Save config as: ",
+                Dock = Dock.Top,
+            };
+            TextBox saveNameTextBox = new TextBox(configsSaveSettingPanel){
+                X=105,
+                Y=22,
+                Width = 214,
+            };
+
+            Button save = new Button(configsSaveSettingPanel)
+            {
+                Dock = Dock.Right,
+                Margin = new Margin(0, 5, 0, 0),
+                Text = "Save Config"
+            };
+            save.Clicked += (o, e) =>
+            {
+                Settings.Save("\\Configs\\" + saveNameTextBox.Text + ".conf");
+                configsCombobox.AddItem(saveNameTextBox.Text + ".conf", saveNameTextBox.Text + ".conf", saveNameTextBox.Text + ".conf");
+            };
+        }
         private void PopulateRiderSettings(ControlBase parent)
         {
             var scarfSettingPanel = GwenHelper.CreateHeaderPanel(parent, "Scarf Settings");
@@ -522,11 +595,14 @@ namespace linerider.UI
 
             ComboBox scarfCombobox = GwenHelper.CreateLabeledCombobox(scarfSettingPanel, "Selected Scarf:");
             scarfCombobox.AddItem("Default", "*default*", "*default*");
-            string[] scarfPaths = Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\LRA\\Scarves");
-            for (int i = 0; i < scarfPaths.Length; i++)
+            string[] scarfPaths = Directory.GetFiles(Program.UserDirectory + "\\Scarves");
+            foreach (string scarfName in scarfPaths)
             {
-                string scarfNames = Path.GetFileName(scarfPaths[i]);
-                scarfCombobox.AddItem(scarfNames, scarfNames, scarfNames);
+                if (scarfName.EndsWith(".txt") || scarfName.EndsWith(".scarf"))
+                {
+                    string name = Path.GetFileName(scarfName);
+                    scarfCombobox.AddItem(name, name, name);
+                }
             }
 
             scarfCombobox.ItemSelected += (o, e) =>
@@ -616,7 +692,7 @@ namespace linerider.UI
             ComboBox activity3 = GwenHelper.CreateLabeledCombobox(discordHeader, "Line 2 Text 1:");
             ComboBox activity4 = GwenHelper.CreateLabeledCombobox(discordHeader, "Line 2 Text 2:");
             ComboBox[] boxArr = { activity1, activity2, activity3, activity4 };
-            for (int i=0; i<4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 boxArr[i].AddItem("None", "none", "none");
                 boxArr[i].AddItem("Selected Tool", "toolText", "toolText");
@@ -662,7 +738,7 @@ namespace linerider.UI
             };
         }
 
-            private void Setup()
+        private void Setup()
         {
             var cat = _prefcontainer.Add("Settings");
             var page = AddPage(cat, "Editor");
@@ -682,6 +758,8 @@ namespace linerider.UI
             PopulateKeybinds(page);
             page = AddPage(cat, "Other");
             PopulateOther(page);
+            page = AddPage(cat, "Configs");
+            PopulateConfigs(page);
             cat = _prefcontainer.Add("LRTran");
             page = AddPage(cat, "Rider");
             PopulateRiderSettings(page);
@@ -693,7 +771,6 @@ namespace linerider.UI
                 _focus = page;
                 page.Show();
             }
-
         }
         private void CategorySelected(object sender, ItemSelectedEventArgs e)
         {
