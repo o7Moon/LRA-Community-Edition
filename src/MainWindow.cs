@@ -616,7 +616,7 @@ namespace linerider
             AddCursor("ibeam", GameResources.cursor_ibeam, 11, 11);
             Program.UpdateCheck();
             Track.AutoLoadPrevious();
-            linerider.Tools.CurrentTools.Init();
+            linerider.Tools.CurrentTools.Init(Canvas);
         }
 
         protected override void OnResize(EventArgs e)

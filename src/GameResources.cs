@@ -369,6 +369,13 @@ namespace linerider
                 return GetBitmap("icons.pantool.png");
             }
         }
+        internal static System.Drawing.Bitmap filltool_icon
+        {
+            get
+            {
+                return GetBitmap("icons.filltool.png");
+            }
+        }
         internal static System.Drawing.Bitmap menu_icon
         {
             get

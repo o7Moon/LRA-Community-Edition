@@ -30,6 +30,7 @@ using Gwen.Skin;
 using Gwen.Controls;
 using Gwen;
 using Color = System.Drawing.Color;
+using linerider.UI.Dialogs;
 
 namespace linerider
 {
@@ -161,7 +162,10 @@ namespace linerider
         {
             if (child is Gwen.ControlInternal.Modal || child is WindowControl)
             {
-                CurrentTools.SelectedTool.Stop();
+                if (!(CurrentTools.SelectedTool is FillTool)) //Let FillTool persist in menus
+                {
+                    CurrentTools.SelectedTool.Stop();
+                }
             }
         }
         public override void Think()
@@ -280,12 +284,19 @@ namespace linerider
             Fonts.Dispose();
             base.Dispose();
         }
-        private void ShowDialog(WindowControl window)
+        private void ShowDialog(WindowControl window, bool keepTool = false)
         {
             if (game.Track.Playing)
                 game.Track.TogglePause();
-            game.StopTools();
+            if (!keepTool)
+            {
+                game.StopTools();
+            }
             window.ShowCentered();
+        }
+        public void ShowFillToolWindow(List<LineSelection> lineSelection)
+        {
+            ShowDialog(new FillToolWindow(this, game.Track, lineSelection), true);
         }
         public void ShowSaveDialog()
         {

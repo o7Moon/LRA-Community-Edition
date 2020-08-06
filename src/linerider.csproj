@@ -144,6 +144,7 @@
   <ItemGroup>
     <Compile Include="Tools\CurrentTools.cs" />
     <Compile Include="Tools\EraserTool.cs" />
+    <Compile Include="Tools\FillTool.cs" />
     <Compile Include="Tools\HandTool.cs" />
     <Compile Include="Tools\LineTool.cs" />
     <Compile Include="Tools\MoveTool.cs" />
@@ -183,6 +184,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="UI\Dialogs\ChangelogWindow.cs" />
+    <Compile Include="UI\Dialogs\FillToolWindow.cs" />
     <Compile Include="UI\Dialogs\TriggerWindow.cs" />
     <Compile Include="UI\PlatformImpl.cs" />
     <Compile Include="UI\Hotkey.cs" />
@@ -357,6 +359,9 @@
       <Project>{41650C82-D630-4E5C-845A-F1513C8FDC99}</Project>
       <Name>Gwen.Renderer.OpenTK</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\icons\filltool.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

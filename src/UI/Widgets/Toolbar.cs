@@ -30,6 +30,7 @@ namespace linerider.UI
         private ImageButton _eraserbtn;
         private ImageButton _selectbtn;
         private ImageButton _handbtn;
+        private ImageButton _fillbtn;
         private ImageButton _start;
         private ImageButton _pause;
         private ImageButton _stop;
@@ -67,6 +68,7 @@ namespace linerider.UI
             _pencilbtn = CreateTool(GameResources.pencil_icon, "Pencil Tool (Q)");
             _linebtn = CreateTool(GameResources.line_icon, "Line Tool (W)");
             _eraserbtn = CreateTool(GameResources.eraser_icon, "Eraser Tool (E)");
+            _fillbtn = CreateTool(GameResources.filltool_icon, "Fill Tool");
             _selectbtn = CreateTool(GameResources.movetool_icon, "Select Tool (R)");
             _handbtn = CreateTool(GameResources.pantool_icon, "Hand Tool (Shift+Space) (T)");
             _start = CreateTool(GameResources.play_icon, "Start (Space) (Y)");
@@ -82,6 +84,7 @@ namespace linerider.UI
             _eraserbtn.Clicked += (o, e) => CurrentTools.SetTool(CurrentTools.EraserTool);
             _selectbtn.Clicked += (o, e) => CurrentTools.SetTool(CurrentTools.MoveTool);
             _handbtn.Clicked += (o, e) => CurrentTools.SetTool(CurrentTools.HandTool);
+            _fillbtn.Clicked += (o, e) => CurrentTools.SetTool(CurrentTools.FillTool);
             _flag.Clicked += (o, e) =>
             {
                 _editor.Flag(_editor.Offset);

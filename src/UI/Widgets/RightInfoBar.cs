@@ -114,6 +114,18 @@ namespace linerider.UI
                 },
                 Margin = new Margin(0, 0, 5, 0),
             };
+
+            new TrackLabel(this)
+            {
+                Dock = Dock.Top,
+                Alignment = Pos.Right | Pos.CenterV,
+                TextRequest = (o, e) =>
+                {
+                    return CurrentTools.SelectedTool.ToString();
+                },
+                Margin = new Margin(0, 0, 5, 0),
+            };
+
             _usercamerasprite = new Sprite(_iconpanel)
             {
                 Dock = Dock.Right,
