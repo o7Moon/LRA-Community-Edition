@@ -711,12 +711,21 @@ namespace linerider
 
         public static void LoadFromHotkey(Hotkey hotkey)
         {
-            string filename = "\\Configs\\" + "Hotkey" + (hotkey.ToString().Substring(11)) + ".conf";
-            if (File.Exists(Program.UserDirectory + filename))
+            //Yeah it uses the hotkey name but it's they easiest way I guess :p - Tran
+            string filenameSettings = "\\Configs\\" + "Hotkey" + (hotkey.ToString().Substring(11)) + ".conf";
+            string filenameHotkeys = "\\Configs\\" + "Hotkey" + (hotkey.ToString().Substring(11)) + "-Hotkeys" + ".conf";
+            if (File.Exists(Program.UserDirectory + filenameSettings))
             {
-                Settings.Load(filename);
+                if (File.Exists(Program.UserDirectory + filenameHotkeys))
+                {
+                    Settings.Load(filenameSettings, filenameHotkeys);
+                }
+                else
+                {
+                    Settings.Load(filenameSettings);
+                }
             }
-            Debug.WriteLine(filename);
+            Debug.WriteLine(filenameSettings);
         }
     }
 }

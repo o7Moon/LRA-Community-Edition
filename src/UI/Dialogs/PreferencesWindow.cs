@@ -529,7 +529,7 @@ namespace linerider.UI
                 "\n" +
                 "Hotkey configs are saved as \"Hotkey[Hotkey Slot]\"\n" +
                 "\n" +
-                "The Restore Defaults can also be overwritten with\n" +
+                "The default settings can also be overwritten with\n" +
                 "a file called \"Defaults-Override\"\n" +
                 "\n" +
                 "NOTE: The .conf will auto be added at the end of the\n" +
@@ -547,8 +547,8 @@ namespace linerider.UI
             {
                 if (configNames.EndsWith(".conf"))
                 {
-                    string name = Path.GetFileName(configNames);
-                    configsCombobox.AddItem(name, name, name);
+                    string name = Path.GetFileNameWithoutExtension(configNames);
+                    configsCombobox.AddItem(name+".conf", name, name);
                 }
             }
             Button load = new Button(configsLoadSettingPanel)
@@ -559,7 +559,19 @@ namespace linerider.UI
             };
             load.Clicked += (o, e) =>
             {
-                Settings.Load("\\Configs\\" + configsCombobox.SelectedItem.UserData);
+                string filenameSettings = "\\Configs\\" + configsCombobox.SelectedItem.UserData + ".conf";
+                string filenameHotkeys = "\\Configs\\" +  configsCombobox.SelectedItem.UserData + "-Hotkeys.conf";
+                if (File.Exists(Program.UserDirectory + filenameSettings))
+                {
+                    if (File.Exists(Program.UserDirectory + filenameHotkeys))
+                    {
+                        Settings.Load(filenameSettings, filenameHotkeys);
+                    }
+                    else
+                    {
+                        Settings.Load(filenameSettings);
+                    }
+                }
                 Settings.Save();
                 _editor.InitCamera();
                 Close(); //"this is lazy, but i don't want to update the ui" Same tbh
@@ -570,12 +582,15 @@ namespace linerider.UI
                 String = "Save config as: ",
                 Dock = Dock.Top,
             };
-            TextBox saveNameTextBox = new TextBox(configsSaveSettingPanel){
+            var saveNameTextBox = new TextBox(configsSaveSettingPanel){
                 X=105,
                 Y=22,
                 Width = 214,
             };
-
+            configsCombobox.ItemSelected += (o, e) =>
+            {
+                saveNameTextBox.Text = e.SelectedItem.UserData.ToString() + ".conf";
+            };
             Button save = new Button(configsSaveSettingPanel)
             {
                 Dock = Dock.Right,
@@ -584,8 +599,13 @@ namespace linerider.UI
             };
             save.Clicked += (o, e) =>
             {
-                Settings.Save("\\Configs\\" + saveNameTextBox.Text + ".conf");
-                configsCombobox.AddItem(saveNameTextBox.Text + ".conf", saveNameTextBox.Text + ".conf", saveNameTextBox.Text + ".conf");
+                string savenameNoExt = saveNameTextBox.Text;
+                if (saveNameTextBox.Text.EndsWith(".conf"))
+                {
+                    savenameNoExt = savenameNoExt.Substring(0, savenameNoExt.Length - 5);
+                }
+                Settings.Save("\\Configs\\" + savenameNoExt + ".conf");
+                configsCombobox.AddItem(savenameNoExt + ".conf", savenameNoExt, savenameNoExt);
             };
         }
         private void PopulateRiderSettings(ControlBase parent)
