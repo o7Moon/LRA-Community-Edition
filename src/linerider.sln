@@ -1,6 +1,7 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
-VisualStudioVersion = 16.0.30114.105
+VisualStudioVersion = 16.0.28827.37
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "linerider", "linerider.csproj", "{AB45D1B5-B29D-4792-9CA8-C7C11E33A447}"
 EndProject
@@ -50,6 +51,6 @@ Global
 		{41650C82-D630-4E5C-845A-F1513C8FDC99} = {D04B6F1D-AB15-440B-BFB5-5699E5FA5F80}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {40396FC4-B3B5-4D3C-B561-27D893764CFA}
+		SolutionGuid = {408269A6-9EA8-42FE-8C65-33A9DCF776B7}
 	EndGlobalSection
 EndGlobal

@@ -30,6 +30,7 @@ using Gwen.Skin;
 using Gwen.Controls;
 using Gwen;
 using Color = System.Drawing.Color;
+using linerider.UI.Dialogs;
 
 namespace linerider
 {
@@ -83,7 +84,15 @@ namespace linerider
             ZoomSlider.IsHidden = rec;
             _toolbar.IsHidden = rec && !Settings.Recording.ShowTools;
             _timeline.IsHidden = rec;
-            //
+            //Hide elements that have Python in the name (aka buttons/panels added via python)
+            foreach (var child in this.Children)
+            {
+                if (child.Name == null) { continue; } //Make sure it won't crash
+                if (child.Name.Contains("Python"))
+                {
+                    child.IsHidden = rec;
+                }
+            }
             _loadingsprite.IsHidden = rec || !Loading;
             var selectedtool = CurrentTools.SelectedTool;
             _usertooltip.IsHidden = !(selectedtool.Active && selectedtool.Tooltip != "");
@@ -306,6 +315,10 @@ namespace linerider
         public void ShowTriggerWindow()
         {
             ShowDialog(new TriggerWindow(this, game.Track));
+        }
+        public void ShowScriptsWindow()
+        {
+            ShowDialog(new ScriptsWindow(this, game.Track));
         }
         public void ShowExportVideoWindow()
         {
