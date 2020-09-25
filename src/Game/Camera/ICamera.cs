@@ -99,7 +99,16 @@ namespace linerider.Game
             var offset = CalculateOffset(frame);
             _prevframe = frame;
             _prevcamera = offset;
-            return _frames[frame].RiderCenter + offset;
+            var result = _frames[frame].RiderCenter + offset;
+            if (Settings.CameraDoLockX)
+            {
+                result.X = Settings.CameraLockXPos;
+            }
+            if (Settings.CameraDoLockY)
+            {
+                result.Y = Settings.CameraLockYPos;
+            }
+            return result;
         }
 
         public Vector2d GetCenter(bool force = false)
