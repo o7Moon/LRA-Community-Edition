@@ -243,8 +243,8 @@ namespace linerider
             RoundLegacyCamera = true;
             CameraDoLockX = false;
             CameraDoLockY = false;
-            CameraLockXPos = float.MaxValue;
-            CameraLockYPos = float.MaxValue;
+            CameraLockXPos = 0;
+            CameraLockYPos = 0;
             SmoothPlayback = true;
             CheckForUpdates = true;
             Record1080p = false;
