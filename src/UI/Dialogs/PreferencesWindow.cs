@@ -347,6 +347,7 @@ namespace linerider.UI
         {
             var camtype = GwenHelper.CreateHeaderPanel(parent, "Camera Type");
             var camprops = GwenHelper.CreateHeaderPanel(parent, "Camera Properties");
+            var camlocks = GwenHelper.CreateHeaderPanel(parent, "Locks");
             RadioButtonGroup rbcamera = new RadioButtonGroup(camtype)
             {
                 Dock = Dock.Top,
@@ -360,6 +361,54 @@ namespace linerider.UI
                 Settings.RoundLegacyCamera = ((Checkbox)o).IsChecked;
                 Settings.Save();
             });
+
+            var xLockPos = new Spinner(camlocks)
+            {
+                Max = float.MaxValue - 1,
+                Min = -float.MaxValue + 1,
+                Value = Settings.CameraLockXPos,
+            };
+            xLockPos.ValueChanged += (o, e) =>
+            {
+                Settings.CameraLockXPos= (float)((Spinner)o).Value;
+                Settings.Save();
+            };
+            var yLockPos = new Spinner(camlocks)
+            {
+                Max = float.MaxValue - 1,
+                Min = -float.MaxValue + 1,
+                Value = Settings.CameraLockYPos,
+            };
+            yLockPos.ValueChanged += (o, e) =>
+            {
+                Settings.CameraLockYPos = (float)((Spinner)o).Value;
+                Settings.Save();
+            };
+            var lockX = GwenHelper.AddCheckbox(camlocks, "Lock Camera X Position", Settings.CameraDoLockX, (o, e) =>
+            {
+                Settings.CameraDoLockX = ((Checkbox)o).IsChecked;
+                Settings.Save();
+                xLockPos.IsDisabled = !Settings.CameraDoLockX;
+            });
+            var lockY = GwenHelper.AddCheckbox(camlocks, "Lock Camera Y Position", Settings.CameraDoLockY, (o, e) =>
+            {
+                Settings.CameraDoLockY = ((Checkbox)o).IsChecked;
+                Settings.Save();
+                yLockPos.IsDisabled = !Settings.CameraDoLockY;
+            });
+            var xLockMenu = GwenHelper.CreateLabeledControl(camlocks, null, new ControlBase[2] { lockX, xLockPos });
+            var yLockMenu = GwenHelper.CreateLabeledControl(camlocks, null, new ControlBase[2] { lockY, yLockPos });
+            lockX.Dock = Dock.Left;
+            lockY.Dock = Dock.Left;
+            xLockPos.IsDisabled = !Settings.CameraDoLockX;
+            yLockPos.IsDisabled = !Settings.CameraDoLockY;
+
+            var camCenter = _editor.Camera.GetCenter();
+            GwenHelper.CreateLabeledControl(camlocks, 
+                "Current Camera Position: (" + camCenter.X.ToString("0.00") + "," + camCenter.Y.ToString("0.00") + ")",
+                new ControlBase[0] { }
+            );
+
             if (Settings.SmoothCamera)
             {
                 if (Settings.PredictiveCamera)

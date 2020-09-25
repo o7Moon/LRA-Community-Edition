@@ -53,22 +53,36 @@ namespace linerider.UI
             {
                 control.Dock = Dock.Right;
             }
-            ControlBase container = new ControlBase(parent)
+
+            ControlBase container;
+            if (label != null)
             {
-                Children =
+                container = new ControlBase(parent)
                 {
-                    new Label(null)
+                    Children =
                     {
-                        Text = label,
-                        Dock = Dock.Left,
-                        Alignment = Pos.Left | Pos.CenterV,
-                        Margin = new Margin(0,0,10,0)
+                        new Label(null)
+                        {
+                            Text = label,
+                            Dock = Dock.Left,
+                            Alignment = Pos.Left | Pos.CenterV,
+                            Margin = new Margin(0,0,10,0)
+                        },
                     },
-                },
-                AutoSizeToContents = true,
-                Dock = Dock.Top,
-                Margin = new Margin(0, 1, 0, 1)
-            };
+                    AutoSizeToContents = true,
+                    Dock = Dock.Top,
+                    Margin = new Margin(0, 1, 0, 1)
+                };
+            }
+            else
+            {
+                container = new ControlBase(parent)
+                {
+                    AutoSizeToContents = true,
+                    Dock = Dock.Top,
+                    Margin = new Margin(0, 1, 0, 1)
+                };
+            }
             for (int i = controls.Length - 1; i >= 0; i--)
             {
                 container.Children.Add(controls[i]);

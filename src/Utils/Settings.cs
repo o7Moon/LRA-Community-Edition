@@ -102,6 +102,10 @@ namespace linerider
         public static bool SmoothCamera;
         public static bool PredictiveCamera;
         public static bool RoundLegacyCamera;
+        public static bool CameraDoLockX;
+        public static bool CameraDoLockY;
+        public static float CameraLockXPos;
+        public static float CameraLockYPos;
         public static bool SmoothPlayback;
         public static bool CheckForUpdates;
         public static bool Record1080p;
@@ -237,6 +241,10 @@ namespace linerider
             SmoothCamera = true;
             PredictiveCamera = false;
             RoundLegacyCamera = true;
+            CameraDoLockX = false;
+            CameraDoLockY = false;
+            CameraLockXPos = float.MaxValue;
+            CameraLockYPos = float.MaxValue;
             SmoothPlayback = true;
             CheckForUpdates = true;
             Record1080p = false;
@@ -501,6 +509,10 @@ namespace linerider
             LoadBool(GetSetting(lines, nameof(SmoothCamera)), ref SmoothCamera);
             LoadBool(GetSetting(lines, nameof(PredictiveCamera)), ref PredictiveCamera);
             LoadBool(GetSetting(lines, nameof(CheckForUpdates)), ref CheckForUpdates);
+            LoadBool(GetSetting(lines, nameof(CameraDoLockX)), ref CameraDoLockX);
+            LoadBool(GetSetting(lines, nameof(CameraDoLockY)), ref CameraDoLockY);
+            LoadFloat(GetSetting(lines, nameof(CameraLockXPos)), ref CameraLockXPos);
+            LoadFloat(GetSetting(lines, nameof(CameraLockYPos)), ref CameraLockYPos);
             LoadBool(GetSetting(lines, nameof(SmoothPlayback)), ref SmoothPlayback);
             LoadBool(GetSetting(lines, nameof(RoundLegacyCamera)), ref RoundLegacyCamera);
             LoadBool(GetSetting(lines, nameof(Record1080p)), ref Record1080p);
@@ -604,6 +616,10 @@ namespace linerider
             config += "\r\n" + MakeSetting(nameof(SmoothCamera), SmoothCamera.ToString(Program.Culture));
             config += "\r\n" + MakeSetting(nameof(PredictiveCamera), PredictiveCamera.ToString(Program.Culture));
             config += "\r\n" + MakeSetting(nameof(CheckForUpdates), CheckForUpdates.ToString(Program.Culture));
+            config += "\r\n" + MakeSetting(nameof(CameraDoLockX), CameraDoLockX.ToString(Program.Culture));
+            config += "\r\n" + MakeSetting(nameof(CameraDoLockY), CameraDoLockY.ToString(Program.Culture));
+            config += "\r\n" + MakeSetting(nameof(CameraLockXPos), CameraLockXPos.ToString(Program.Culture));
+            config += "\r\n" + MakeSetting(nameof(CameraLockYPos), CameraLockYPos.ToString(Program.Culture));
             config += "\r\n" + MakeSetting(nameof(SmoothPlayback), SmoothPlayback.ToString(Program.Culture));
             config += "\r\n" + MakeSetting(nameof(PlaybackZoomType), PlaybackZoomType.ToString(Program.Culture));
             config += "\r\n" + MakeSetting(nameof(PlaybackZoomValue), PlaybackZoomValue.ToString(Program.Culture));
