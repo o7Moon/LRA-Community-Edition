@@ -590,7 +590,7 @@ namespace linerider
             Paused = false;
             Offset = frameid;
             IterationsOffset = 6;
-            Camera.SetFrameCenter(Timeline.GetFrame(frameid).CalculateCenter());
+            Camera.SetInitialFrameCenter(Timeline.GetFrame(frameid).CalculateCenter());
 
             game.UpdateCursor();
             switch (TrackRecorder.Recording ? 0 : Settings.PlaybackZoomType)

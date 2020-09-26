@@ -99,20 +99,12 @@ namespace linerider.Game
             var offset = CalculateOffset(frame);
             _prevframe = frame;
             _prevcamera = offset;
-            var result = _frames[frame].RiderCenter + offset;
-            if (Settings.CameraDoLockX)
-            {
-                result.X = Settings.CameraLockXPos;
-            }
-            if (Settings.CameraDoLockY)
-            {
-                result.Y = Settings.CameraLockYPos;
-            }
-            return result;
+            return _frames[frame].RiderCenter + offset;
         }
 
         public Vector2d GetCenter(bool force = false)
         {
+            Vector2d result;
             if (_center == Vector2d.Zero)
             {
                 if (_zoom != _cachezoom || force)
@@ -132,9 +124,21 @@ namespace linerider.Game
                         _cachezoom = _zoom;
                     }
                 }
-                return Vector2d.Lerp(_cachedprevcenter, _cachedcenter, _blend);
+                result = Vector2d.Lerp(_cachedprevcenter, _cachedcenter, _blend);
             }
-            return _center;
+            else
+            {
+                result = _center;
+            }
+            if (Settings.CameraDoLockX)
+            {
+                result.X = Settings.CameraLockXPos;
+            }
+            if (Settings.CameraDoLockY)
+            {
+                result.Y = Settings.CameraLockYPos;
+            }
+            return result;
         }
         public void SetFrame(int frame)
         {
@@ -153,6 +157,17 @@ namespace linerider.Game
                 _cachedcenter = Vector2d.Zero;
             }
             _zoom = zoom;
+        }
+        public void SetInitialFrameCenter(Vector2d center)
+        {
+            if (Settings.CameraDoLockX)
+            {
+                center.X = Settings.CameraLockXPos;
+            }
+            if (Settings.CameraDoLockX)
+            {
+                center.Y = Settings.CameraLockYPos;
+            }
         }
         public void SetFrameCenter(Vector2d center)
         {
