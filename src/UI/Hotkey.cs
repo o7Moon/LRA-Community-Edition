@@ -45,6 +45,11 @@ namespace linerider.UI
         ToolScaleAspectRatio,
         LineToolFlipLine,
 
+        ToolNudgeUp,
+        ToolNudgeLeft,
+        ToolNudgeRight,
+        ToolNudgeDown,
+
         PlaybackStartSlowmo,
         PlaybackStartIgnoreFlag,
         PlaybackStartGhostFlag,

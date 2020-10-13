@@ -16,8 +16,23 @@ namespace linerider.Tools
     //todo the node attachment gets wonky when inverting scale/rotate.
     //can be demonstrated by showing the hover while clicking
     //ideally, the node/square shuold be rotated
+    public enum NudgeDirection
+    {
+        UP,
+        LEFT,
+        RIGHT,
+        DOWN
+    }
+
     public class SelectTool : Tool
     {
+        public static Dictionary<NudgeDirection, Vector2d> NudgeDirectionVectorMap = new Dictionary<NudgeDirection, Vector2d> {
+            {NudgeDirection.UP, new Vector2d(0, -1)},
+            {NudgeDirection.LEFT, new Vector2d(-1, 0)},
+            {NudgeDirection.RIGHT, new Vector2d(1, 0)},
+            {NudgeDirection.DOWN, new Vector2d(0, 1)},
+        };
+
         public override Swatch Swatch
         {
             get
@@ -498,6 +513,34 @@ namespace linerider.Tools
                 game.Track.NotifyTrackChanged();
             }
         }
+        public void Nudge(NudgeDirection direction)
+        {
+            if (Active && !_drawingbox && _selection.Count > 0)
+            {
+                using (var trk = game.Track.CreateTrackWriter())
+                {
+                    game.Track.UndoManager.BeginAction();
+
+                    var diff = 1;
+                    Vector2d moveVector = NudgeDirectionVectorMap[direction];
+                    moveVector = Vector2d.Multiply(moveVector, diff);
+                    foreach (var selected in _selection)
+                    {
+                        Vector2d p1 = Vector2d.Add(selected.line.Position, moveVector);
+                        Vector2d p2 = Vector2d.Add(selected.line.Position2, moveVector);
+                        trk.MoveLine(selected.line, p1, p2);
+
+                    }
+
+                    _selectionbox = GetBoxFromSelected(_selection);
+                    game.Track.UndoManager.EndAction();
+                    game.Track.NotifyTrackChanged();
+                    _boxselection.Clear();
+                }
+            }
+            game.Invalidate();
+        }
+
         private void StartAddSelection(Vector2d gamepos)
         {
             _movingselection = false;

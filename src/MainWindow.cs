@@ -1040,11 +1040,11 @@ namespace linerider
             InputUtils.RegisterHotkey(Hotkey.MagicAnimateAdvanceFrame, () => true, () =>
             {
                 MagicAnimator.AdvanceFrame();
-            });
+            }, null, repeat: true);
             InputUtils.RegisterHotkey(Hotkey.MagicAnimateRecedeFrame, () => true, () =>
             {
                 MagicAnimator.RecedeFrame();
-            });
+            }, null, repeat: true);
             InputUtils.RegisterHotkey(Hotkey.MagicAnimateRecedeMultiFrame, () => true, () =>
             {
                 MagicAnimator.RecedeMultiFrame();
@@ -1484,6 +1484,38 @@ namespace linerider
             },
             null,
             repeat: false);
+            InputUtils.RegisterHotkey(Hotkey.ToolNudgeUp, () => !Track.Playing &&
+            CurrentTools.SelectedTool == CurrentTools.SelectTool, () =>
+            {
+                CurrentTools.SelectTool.Nudge(NudgeDirection.UP);
+                Invalidate();
+            },
+            null,
+            repeat: true);
+            InputUtils.RegisterHotkey(Hotkey.ToolNudgeLeft, () => !Track.Playing &&
+            CurrentTools.SelectedTool == CurrentTools.SelectTool, () =>
+            {
+                CurrentTools.SelectTool.Nudge(NudgeDirection.LEFT);
+                Invalidate();
+            },
+            null,
+            repeat: true);
+            InputUtils.RegisterHotkey(Hotkey.ToolNudgeRight, () => !Track.Playing &&
+            CurrentTools.SelectedTool == CurrentTools.SelectTool, () =>
+            {
+                CurrentTools.SelectTool.Nudge(NudgeDirection.RIGHT);
+                Invalidate();
+            },
+            null,
+            repeat: true);
+            InputUtils.RegisterHotkey(Hotkey.ToolNudgeDown, () => !Track.Playing &&
+            CurrentTools.SelectedTool == CurrentTools.SelectTool, () =>
+            {
+                CurrentTools.SelectTool.Nudge(NudgeDirection.DOWN);
+                Invalidate();
+            },
+            null,
+            repeat: true);
         }
         public void setScarfColor(int index, int color, byte opacity)
         {

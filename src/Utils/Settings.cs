@@ -333,6 +333,10 @@ namespace linerider
                 new Keybinding(Key.Y, KeyModifiers.Control),
                 new Keybinding(Key.Z, KeyModifiers.Control | KeyModifiers.Shift));
 
+            SetupDefaultKeybind(Hotkey.ToolNudgeUp, new Keybinding(Key.W, KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.ToolNudgeLeft, new Keybinding(Key.A, KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.ToolNudgeRight, new Keybinding(Key.D, KeyModifiers.Shift));
+            SetupDefaultKeybind(Hotkey.ToolNudgeDown, new Keybinding(Key.S, KeyModifiers.Shift));
             SetupDefaultKeybind(Hotkey.PlaybackStartIgnoreFlag, new Keybinding(Key.Y, KeyModifiers.Alt));
             SetupDefaultKeybind(Hotkey.PlaybackStartGhostFlag, new Keybinding(Key.I, KeyModifiers.Shift));
             SetupDefaultKeybind(Hotkey.PlaybackStartSlowmo, new Keybinding(Key.Y, KeyModifiers.Shift));
