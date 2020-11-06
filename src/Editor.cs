@@ -70,7 +70,7 @@ namespace linerider
             }
             set
             {
-                _zoom = (float)MathHelper.Clamp(value, Constants.MinimumZoom, Settings.Local.MaxZoom);
+                _zoom = (float)MathHelper.Clamp(value, Settings.Local.MinimumZoom, Settings.Local.MaxZoom);
                 Invalidate();
             }
         }
