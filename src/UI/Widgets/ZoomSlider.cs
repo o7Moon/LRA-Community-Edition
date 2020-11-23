@@ -49,7 +49,7 @@ namespace linerider.UI
                 if (Held)
                 {
                     var val = Value;
-                    _editor.Zoom = (float)MathHelper.Clamp(Value, Settings.Local.MinimumZoom, Settings.Local.MaxZoom);
+                    _editor.Zoom = (float)MathHelper.Clamp(Value, Constants.MinimumZoom, Settings.Local.MaxZoom);
                 }
                 UpdateTooltip();
             };

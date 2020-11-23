@@ -59,13 +59,6 @@ namespace linerider
                     return Settings.SuperZoom ? Constants.MaxSuperZoom : Constants.MaxZoom;
                 }
             }
-            public static double MinimumZoom
-            {
-                get
-                {
-                    return Settings.SuperZoom ? Constants.MinimumSuperZoom : Constants.MinimumZoom;
-                }
-            }
             public static bool TrackOverlay = false;
             public static bool TrackOverlayFixed = false;
             public static int TrackOverlayFixedFrame = 0;

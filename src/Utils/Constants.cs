@@ -38,10 +38,9 @@ namespace linerider.Utils
         public const float DefaultZoom = 4;
         public const int PhysicsRate = 40;
         public static bool ScaleCamera = true;
-        public const double MinimumSuperZoom = 0.01;
         public const double MinimumZoom = 0.1;
         public const float MaxZoom = 24;
-        public const float MaxSuperZoom = 10000;
+        public const float MaxSuperZoom = 200;
         public const int MaxFrames = 40 * 60 * 60 * 3;// 3 hours of frames
         public static Color DefaultKnobColor => Settings.NightMode
         ? Color.FromArgb(ColorNightMode.ToArgb())
