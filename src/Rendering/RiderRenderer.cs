@@ -8,13 +8,14 @@ using linerider.Drawing;
 using linerider.Utils;
 using linerider.Game;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 
 namespace linerider.Rendering
 {
     public class RiderRenderer
     {
-        public List<int> scarfColors = new List<int>();
-        public List<byte> scarfOpacity = new List<byte>();
+        public List<Color> scarfColors = new List<Color>();
 
         private AutoArray<RiderVertex> Array = new AutoArray<RiderVertex>(500);
         public float Scale = 1.0f;
@@ -416,23 +417,11 @@ namespace linerider.Rendering
         }
         private void DrawScarf(Line[] lines, float opacity)
         {
-            if (scarfColors.Count==0) {
-                scarfColors.Add(0xffffff);
-            }
-            if (scarfOpacity.Count == 0)
-            {
-                scarfOpacity.Add((byte)0xff);
-            }
-
-            var c = Utility.ColorToRGBA_LE(0xD10101, (byte)(255 * opacity));    //Scarf color
-            var alt = Utility.ColorToRGBA_LE(0xff6464, (byte)(255 * opacity));  //Scarf color
-            var scarfPart = 0;
-
             List<Vector2> altvectors = new List<Vector2>();
             for (int i = 0; i < lines.Length; i += 2)
             {
-                scarfPart = (((i % scarfColors.Count)+(scarfColors.Count - 1)) % scarfColors.Count);
-                c = Utility.ColorToRGBA_LE(scarfColors[scarfPart], (byte)(scarfOpacity[scarfPart] * opacity));
+                Color segmentColor = scarfColors[i % scarfColors.Count];
+                int c = Utility.ColorToRGBA_LE(Color.FromArgb((byte)(segmentColor.A * opacity), segmentColor));
 
                 var verts = DrawLine(lines[i].Position, lines[i].Position2, c, 2);
 
@@ -444,16 +433,18 @@ namespace linerider.Rendering
                 altvectors.Add(verts[2]);
                 altvectors.Add(verts[3]);
             }
-            for (int i = 0; i < altvectors.Count - 4; i += 4)
+            for (int i = 0; i < altvectors.Count - 4; i += 4) //Four vectors per alt
             {
-                scarfPart = (i/2 % scarfColors.Count);
-                alt = Utility.ColorToRGBA_LE(scarfColors[scarfPart], (byte)(scarfOpacity[scarfPart] * opacity));
+                int scarfPart = (i / 2 % scarfColors.Count) + 1;
+                Color segmentColor = scarfColors[scarfPart % scarfColors.Count];
+                int alt = Utility.ColorToRGBA_LE(Color.FromArgb((byte)(segmentColor.A * opacity), segmentColor));
+
                 var verts = new RiderVertex[] {
-                    RiderVertex.NoTexture(altvectors[i + 0],alt),
-                    RiderVertex.NoTexture(altvectors[i + 1],alt),
-                    RiderVertex.NoTexture(altvectors[i + 2],alt),
-                    RiderVertex.NoTexture(altvectors[i + 3],alt)
-                };
+                     RiderVertex.NoTexture(altvectors[i + 0],alt),
+                     RiderVertex.NoTexture(altvectors[i + 1],alt),
+                     RiderVertex.NoTexture(altvectors[i + 2],alt),
+                     RiderVertex.NoTexture(altvectors[i + 3],alt)
+                 };
                 Array.Add(verts[0]);
                 Array.Add(verts[1]);
                 Array.Add(verts[2]);
@@ -474,6 +465,50 @@ namespace linerider.Rendering
         {
             return Color.FromArgb((int)(opacity * c.A), c);
         }
+
+        public void setupNewBoshScarf()
+        {
+            //TODO: This resets the scarf so scarf segments can be changed in real time (but the simulation will be incorrect until properly restarted)
+            loadScarfFromFile(Settings.SelectedScarf);
+        }
+
+        public void loadScarfFromFile(string scarfName)
+        {
+            string scarfLocation = Program.UserDirectory + "Scarves\\" + scarfName;
+            try
+            {
+                scarfColors.Clear();
+                if (scarfName != "*default*")
+                {
+                    string[] lines = File.ReadAllLines(scarfLocation);
+                    if (lines[0].ToLower().Contains("scarf file"))
+                    {
+                        for (int i = 1; i < lines.Length; i++)
+                        {
+                            //Debug.WriteLine(lines[i]);
+                            int intColor = Convert.ToInt32(lines[i].Substring(0, lines[i].IndexOf(",")), 16);
+                            byte opacity = Convert.ToByte(lines[i].Substring(lines[i].IndexOf(" ") + 1), 16);
+
+                            Color c = Color.FromArgb(opacity, Color.FromArgb(intColor));
+                            scarfColors.Add(c);
+                        }
+                    }
+                }
+                else 
+                { 
+                    scarfColors.Add(Color.FromArgb(0xff, 0xff, 0x64, 0x64)); //Default Color 1
+                    scarfColors.Add(Color.FromArgb(0xff, 0xD1, 0x01, 0x01)); //Default Color 2
+                }
+            }
+            catch (Exception e)
+            {
+                //Couldn't load scarf! Lets reset it and load the default one
+                //throw e;
+                Settings.SelectedScarf = "*default*";
+                loadScarfFromFile(Settings.SelectedScarf);
+            }
+        }
+
         private enum Tex
         {
             None = 0,

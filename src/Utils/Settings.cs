@@ -270,7 +270,7 @@ namespace linerider
             discordActivity2 = "none";
             discordActivity3 = "none";
             discordActivity4 = "none";
-            largeImageKey = "lrl";
+            largeImageKey = "icon";
             showChangelog = true;
             multiScarfAmount = 1;
             multiScarfSegments = 5;

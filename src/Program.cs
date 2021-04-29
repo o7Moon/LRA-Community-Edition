@@ -38,7 +38,7 @@ namespace linerider
         public readonly static CultureInfo Culture = new CultureInfo("en-US");
         public static string Version = "8/24/20 - Build 1";
         public static string TestVersion = "";
-        public static string NewVersion = null;
+                                        public static string NewVersion = null;
         public static readonly string WindowTitle = "Line Rider Advanced: Community Edition " + Version + TestVersion;
         public static Random Random;
         private static bool _crashed;
@@ -46,6 +46,7 @@ namespace linerider
         private static string _currdir;
         private static string _userdir;
         public static string[] args;
+        public static long startTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         /// <summary>
         /// Gets the current directory. Ends in Path.DirectorySeperator
@@ -136,6 +137,7 @@ namespace linerider
             }
 #endif
             args = givenArgs;
+
             if (!Directory.Exists(UserDirectory))
             {
                 Directory.CreateDirectory(UserDirectory);

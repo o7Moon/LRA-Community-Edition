@@ -53,15 +53,8 @@ namespace linerider
 {
     public class MainWindow : OpenTK.GameWindow
     {
-        public Discord.Discord discord = null; //Create discord for game sdk activity
-        public static int startTime = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;  //Probably a easier way to do this but whatever
+        public DiscordActivityController DiscordActivityController = new DiscordActivityController();
         public int lastUpdateTime = 0; //Last time the activity was updated
-        public bool firstGameUpdate = true; //Run this only on the first update (probably a better way to do this, this is probably bad)
-        public String curentScarf = null; //What the current scarf it to compare it to the settings
-        public bool scarfNeedsUpdate = true; //If the scarf needs a update 
-        public String currentBoshSkin = null; //What the current rider skin is to to compare it to the settings
-        public bool editBoshPng = Settings.customScarfOnPng; //Local copy of customScarfOnPng to check back
-        public bool forceDiscordUpdate = true;
 
         public Dictionary<string, MouseCursor> Cursors = new Dictionary<string, MouseCursor>();
         public MsaaFbo MSAABuffer;
@@ -100,6 +93,7 @@ namespace linerider
         private Gwen.Input.OpenTK _input;
         private bool _dragRider;
         private bool _invalidated;
+        private bool shownChangelog;
         private readonly Stopwatch _autosavewatch = Stopwatch.StartNew();
         public MainWindow()
             : base(
@@ -120,6 +114,9 @@ namespace linerider
             WindowBorder = WindowBorder.Resizable;
             RenderFrame += (o, e) => { Render(); };
             UpdateFrame += (o, e) => { GameUpdate(); };
+
+            Track._renderer._riderrenderer.setupNewBoshScarf();
+
             new Thread(AutosaveThreadRunner) { IsBackground = true, Name = "Autosave" }.Start();
             GameService.Initialize(this);
             AddonManager.Initialize(this);
@@ -281,79 +278,12 @@ namespace linerider
         }
         public void GameUpdate()
         {
-            //TODO: Put these not in the main loop and put them in reasonable places
-            if (firstGameUpdate)
-            {
-                Canvas.ShowChangelog();
-                firstGameUpdate = false;
-                removeAllScarfColors(); //Remove default white scarf
-                reloadRiderModel();
-                forceDiscordUpdate = true;
-                Settings.discordActivityEnabled = false; //Dumb but I'm doing this in case it leads to the app not starting due to discord not being open
-            }
-
-            //Code to run each frame
-            int currentTime = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds; //Get current time for discord activity
-            //Debug.WriteLine(Track.Name);
-            //Update bosh skin if needed
-            if (currentBoshSkin != Settings.SelectedBoshSkin)
-            {
-                reloadRiderModel();
-                removeAllScarfColors();
-                updateScarf();
-                currentBoshSkin = Settings.SelectedBoshSkin;
-                editBoshPng = Settings.customScarfOnPng;
-            }
-            //Update scarf if needed
-            if ((scarfNeedsUpdate || (curentScarf != Settings.SelectedScarf)) || ((Settings.customScarfOnPng == false) && (editBoshPng)))
-            {
-                curentScarf = Settings.SelectedScarf;
-                removeAllScarfColors();
-                updateScarf();
-                scarfNeedsUpdate = false;
-                editBoshPng = Settings.customScarfOnPng;
-                if (Settings.customScarfOnPng) { reloadRiderModel(); }
-
-                while (getScarfColorList().Count() < Settings.ScarfSegments)
-                {
-                    getScarfColorList().AddRange(getScarfColorList());
-                    getScarfOpacityList().AddRange(getScarfOpacityList());
-                }
-
-                for (int i = 1; i < Settings.multiScarfAmount; i++)
-                {
-                    insertScarfColor(0x0000FF, 0x00, ((i * Settings.multiScarfSegments)) + (i - 1) - (1 + i));
-                }
-            }
-            //If edits to the png is toggled update the rider
-            if (editBoshPng != Settings.customScarfOnPng)
-            {
-                reloadRiderModel();
-                editBoshPng = Settings.customScarfOnPng;
-            }
-            //If the discord activity should be updated
-            if ((((currentTime % 10 == 0) && (currentTime != lastUpdateTime)) || forceDiscordUpdate) && Settings.discordActivityEnabled)
-            {
-                if (discord == null)
-                {
-                    discord = new Discord.Discord(506953593945980933, (UInt64)Discord.CreateFlags.Default);
-                    discord.SetLogHook(Discord.LogLevel.Debug, (level, message) =>
-                    {
-                        Console.WriteLine("Log[{0}] {1}", level, message);
-                    });
-                }
-                lastUpdateTime = currentTime;
-                UpdateActivity(discord);
-                forceDiscordUpdate = false;
-            }
-            //Update each frame
             if (Settings.discordActivityEnabled)
             {
-                try { discord.RunCallbacks(); }
-                catch (Exception e) { Debug.WriteLine(e); }
+                DiscordActivityController.UpdateDiscordActivityInfo();
+                DiscordActivityController.UpdateStatus();
             }
 
-            //Regular code starts here
             GameUpdateHandleInput();
             var updates = Track.Scheduler.UnqueueUpdates();
             if (updates > 0)
@@ -383,175 +313,15 @@ namespace linerider
                     Track.Update(updates);
                 }
             }
+            AudioService.EnsureSync();
             if (Program.NewVersion != null)
             {
                 Canvas.ShowOutOfDate();
             }
-            AudioService.EnsureSync();
-        }
-
-        public void reloadRiderModel()
-        {
-            if (Settings.SelectedBoshSkin == null) { Models.LoadModels(); return; }
-
-            Bitmap bodyPNG = null;
-            Bitmap bodyDeadPNG = null;
-
-            try
+            if (shownChangelog == false)
             {
-                if (Settings.customScarfOnPng && !Settings.SelectedBoshSkin.Equals("*default*"))
-                {
-                    bodyPNG = new Bitmap(Program.UserDirectory + "/Riders/" + Settings.SelectedBoshSkin + "/body.png");
-                    bodyDeadPNG = new Bitmap(Program.UserDirectory + "/Riders/" + Settings.SelectedBoshSkin + "/bodydead.png");
-                    Bitmap palettePNG = new Bitmap(Program.UserDirectory + "/Riders/" + Settings.SelectedBoshSkin + "/palette.png");
-                    var scarfColorList = getScarfColorList();
-                    if (scarfColorList.Count == 0) { Models.LoadModels(); return; }
-                    for (int i = 0; i < palettePNG.Width; i++)
-                    {
-                        Color colorToChange = palettePNG.GetPixel(i, 0);
-                        colorToChange = Color.FromArgb(255, colorToChange.R, colorToChange.G, colorToChange.B);
-
-                        Color newScarfColor = Color.FromArgb(scarfColorList[i % scarfColorList.Count]);
-                        newScarfColor = Color.FromArgb(255, newScarfColor); //Add 255 alpha
-
-                        for (int x = 0; x < bodyPNG.Width; x++)
-                        {
-                            for (int y = 0; y < bodyPNG.Height; y++)
-                            {
-                                Color aliveColor = bodyPNG.GetPixel(x, y);
-                                if (aliveColor.Equals(colorToChange))
-                                {
-                                    bodyPNG.SetPixel(x, y, newScarfColor);
-                                }
-                                Color deadColor = bodyDeadPNG.GetPixel(x, y);
-                                if (deadColor.Equals(colorToChange))
-                                {
-                                    bodyDeadPNG.SetPixel(x, y, newScarfColor);
-                                }
-                            }//for y
-                        }//for x
-                    }//for each (i)
-                    shiftScarfColors((scarfColorList.Count * palettePNG.Width) - palettePNG.Width);
-                }//if
-            }
-            catch (Exception e) { Debug.WriteLine(e); Models.LoadModels(); }
-
-            if (Settings.SelectedBoshSkin == "*default*") { Models.LoadModels(); return; }
-
-            try
-            {
-                if (bodyPNG == null) { bodyPNG = new Bitmap(Program.UserDirectory + "/Riders/" + Settings.SelectedBoshSkin + "/body.png"); }
-                if (bodyDeadPNG == null) { bodyDeadPNG = new Bitmap(Program.UserDirectory + "/Riders/" + Settings.SelectedBoshSkin + "/bodydead.png"); }
-
-                Models.LoadModels(
-                    bodyPNG,
-                    bodyDeadPNG,
-                    new Bitmap(Program.UserDirectory + "/Riders/" + Settings.SelectedBoshSkin + "/sled.png"),
-                    new Bitmap(Program.UserDirectory + "/Riders/" + Settings.SelectedBoshSkin + "/brokensled.png"),
-                    new Bitmap(Program.UserDirectory + "/Riders/" + Settings.SelectedBoshSkin + "/arm.png"),
-                    new Bitmap(Program.UserDirectory + "/Riders/" + Settings.SelectedBoshSkin + "/leg.png"));
-            }
-            catch (Exception e) { Debug.WriteLine(e); Models.LoadModels(); }
-        }
-
-        public void updateScarf()
-        {
-            string scarfLocation = Program.UserDirectory + "/Scarves/" + Settings.SelectedScarf;
-            try
-            {
-                if ((Settings.SelectedScarf != "*default*") && (File.ReadLines(scarfLocation).First() == "#LRTran Scarf File"))
-                {
-                    string[] lines = File.ReadAllLines(scarfLocation);
-                    for (int i = 1; i < lines.Length; i++)
-                    {
-                        //Debug.WriteLine(lines[i]);
-                        int color = Convert.ToInt32(lines[i].Substring(0, lines[i].IndexOf(",")), 16);
-                        byte opacity = Convert.ToByte(lines[i].Substring(lines[i].IndexOf(" ") + 1), 16);
-                        //Debug.WriteLine("Color: " + color);
-                        //Debug.WriteLine("Opacity: " + opacity);
-                        addScarfColor(color, opacity);
-                    }
-                }
-                else { addScarfColor(0xff6464, 0xff); /*Default Color 1*/ addScarfColor(0xD10101, 0xff); /*Default Color 2*/}
-            }
-            catch { addScarfColor(0xff6464, 0xff); /*Default Color 1*/ addScarfColor(0xD10101, 0xff); /*Default Color 2*/}
-        }
-        //Used to be static
-        public void UpdateActivity(Discord.Discord discord)
-        {
-            String toolName = (linerider.Tools.CurrentTools.SelectedTool.ToString().Substring(16)); toolName = toolName.Substring(0, toolName.Length - 4).ToLower();
-
-            String versionText = "LRA:CE version " + linerider.Program.Version;
-
-            String largeKey = Settings.largeImageKey;
-            String largeText = versionText + " ==================== Source code: https://github.com/RatherBeLunar/LRA-Community-Edition";
-            String smallKey = toolName;
-            String smallText = "Currently using the " + toolName + " tool";
-
-            String setting1 = discordSettingToString(Settings.discordActivity1);
-            String setting2 = discordSettingToString(Settings.discordActivity2);
-            String setting3 = discordSettingToString(Settings.discordActivity3);
-            String setting4 = discordSettingToString(Settings.discordActivity4);
-
-            String detailsText = setting1;
-            if (setting2.Length > 0) { detailsText = detailsText + " | " + setting2; }
-            String stateText = setting3;
-            if (setting4.Length > 0) { stateText = stateText + " | " + setting4; }
-
-            var activityManager = discord.GetActivityManager();
-            var lobbyManager = discord.GetLobbyManager();
-
-            var activity = new Discord.Activity
-            {
-                Type = 0,
-                Details = detailsText,
-                State = stateText,
-                Timestamps =
-                {
-                    Start = startTime,
-                    End = 0,
-                },
-                Assets =
-            {
-                LargeImage = largeKey,
-                LargeText = largeText,
-                SmallImage = smallKey,
-                SmallText = smallText,
-            },
-                Instance = false
-            };
-
-            activityManager.UpdateActivity(activity, result =>
-            {
-                Console.WriteLine("Update Activity {0}", result);
-            });
-        }
-
-        public String discordSettingToString(String setting)
-        {
-            String toolName = (linerider.Tools.CurrentTools.SelectedTool.ToString().Substring(16)); toolName = toolName.Substring(0, toolName.Length - 4).ToLower();
-            String lineText = "Amount of Lines: " + Track.LineCount;
-            String unsavedChangesText = "Unsaved changes: " + Track.TrackChanges;
-            String toolText = "Currently using the " + toolName + " tool";
-            String trackText = "Track name: \"" + Track.Name + "\"";
-            String versionText = "LRA:CE version " + linerider.Program.Version;
-
-            switch (setting)
-            {
-                case "none":
-                    return "";
-                case "lineText":
-                    return lineText;
-                case "unsavedChangesText":
-                    return unsavedChangesText;
-                case "toolText":
-                    return toolText;
-                case "trackText":
-                    return trackText;
-                case "versionText":
-                    return versionText;
-                default:
-                    return "";
+                Canvas.ShowChangelog();
+                shownChangelog = true;
             }
         }
 
@@ -616,7 +386,7 @@ namespace linerider
             _input = new Gwen.Input.OpenTK(this);
             _input.Initialize(Canvas);
             Canvas.ShouldDrawBackground = false;
-            Models.LoadModels();
+            Models.LoadModelsFromFolder(Settings.SelectedBoshSkin);
 
             AddCursor("pencil", GameResources.cursor_pencil, 6, 25);
             AddCursor("line", GameResources.cursor_line, 11, 11);
@@ -636,6 +406,8 @@ namespace linerider
             Program.UpdateCheck();
             Track.AutoLoadPrevious();
             linerider.Tools.CurrentTools.Init();
+
+            
         }
 
         protected override void OnResize(EventArgs e)
@@ -1484,47 +1256,6 @@ namespace linerider
             },
             null,
             repeat: false);
-        }
-        public void setScarfColor(int index, int color, byte opacity)
-        {
-            Track._renderer._riderrenderer.scarfColors[index] = color;
-            Track._renderer._riderrenderer.scarfOpacity[index] = opacity;
-        }
-        public void addScarfColor(int color, byte opacity)
-        {
-            Track._renderer._riderrenderer.scarfColors.Add(color);
-            Track._renderer._riderrenderer.scarfOpacity.Add(opacity);
-        }
-        public void insertScarfColor(int color, byte opacity, int index)
-        {
-            Track._renderer._riderrenderer.scarfColors.Insert(index, color);
-            Track._renderer._riderrenderer.scarfOpacity.Insert(index, opacity);
-        }
-        public void removeScarfColor(int index)
-        {
-            Track._renderer._riderrenderer.scarfColors.RemoveAt(index);
-            Track._renderer._riderrenderer.scarfOpacity.RemoveAt(index);
-        }
-        public List<int> getScarfColorList()
-        {
-            return Track._renderer._riderrenderer.scarfColors;
-        }
-        public List<byte> getScarfOpacityList()
-        {
-            return Track._renderer._riderrenderer.scarfOpacity;
-        }
-        public void removeAllScarfColors()
-        {
-            Track._renderer._riderrenderer.scarfColors.Clear();
-            Track._renderer._riderrenderer.scarfOpacity.Clear();
-        }
-        public void shiftScarfColors(int shift) //Shifts scarf colors to the left
-        {
-            for (int i = 0; i < shift; i++)
-            {
-                insertScarfColor(getScarfColorList()[getScarfColorList().Count - 1], getScarfOpacityList()[getScarfOpacityList().Count - 1], 0);
-                removeScarfColor(getScarfColorList().Count - 1);
-            }
         }
     }
 }

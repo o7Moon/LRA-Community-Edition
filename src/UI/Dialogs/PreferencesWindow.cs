@@ -748,7 +748,7 @@ namespace linerider.UI
                 Settings.Save();
             });
 
-            var showChangelog = GwenHelper.AddCheckbox(updates, "Show LRTran Changelog", Settings.showChangelog, (o, e) =>
+            var showChangelog = GwenHelper.AddCheckbox(updates, "Show LRA:CE Changelog", Settings.showChangelog, (o, e) =>
             {
                 Settings.showChangelog = ((Checkbox)o).IsChecked;
                 Settings.Save();
@@ -863,7 +863,7 @@ namespace linerider.UI
 
             ComboBox scarfCombobox = GwenHelper.CreateLabeledCombobox(scarfSettingPanel, "Selected Scarf:");
             scarfCombobox.AddItem("Default", "*default*", "*default*");
-            string[] scarfPaths = Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\LRA\\Scarves");
+            string[] scarfPaths = Directory.GetFiles(Program.UserDirectory + "\\Scarves");
             for (int i = 0; i < scarfPaths.Length; i++)
             {
                 string scarfNames = Path.GetFileName(scarfPaths[i]);
@@ -874,6 +874,7 @@ namespace linerider.UI
             {
                 Settings.SelectedScarf = (String)e.SelectedItem.UserData;
                 Debug.WriteLine("Selected Scarf: \"" + Settings.SelectedScarf + "\"");
+                _editor._renderer._riderrenderer.loadScarfFromFile(Settings.SelectedScarf);
                 Settings.Save();
             };
 
@@ -925,7 +926,7 @@ namespace linerider.UI
             boshSkinCombobox.AddItem("Default", "*default*", "*default*");
 
 
-            string[] riderPaths = Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/LRA/Riders");
+            string[] riderPaths = Directory.GetDirectories(Program.UserDirectory + "Riders");
             for (int i = 0; i < riderPaths.Length; i++)
             {
                 String riderNames = Path.GetFileName(riderPaths[i]);
@@ -935,6 +936,7 @@ namespace linerider.UI
             {
                 Settings.SelectedBoshSkin = (String)e.SelectedItem.UserData; ;
                 Debug.WriteLine("Selected rider Skin: \"" + Settings.SelectedBoshSkin + "\"");
+                Models.LoadModelsFromFolder(Settings.SelectedBoshSkin);
                 Settings.Save();
             };
 
@@ -993,8 +995,8 @@ namespace linerider.UI
             };
 
             ComboBox largeImageKey = GwenHelper.CreateLabeledCombobox(discordHeader, "Image:");
-            largeImageKey.AddItem("LRTran App Icon", "lrl", "lrl");
-            largeImageKey.AddItem(":boshbless:", "bosh_pray", "bosh_pray");
+            largeImageKey.AddItem("LRA:CE App Icon", "icon", "icon");
+            largeImageKey.AddItem(":boshbless:", "boshbless", "boshbless");
             largeImageKey.SelectByUserData(Settings.largeImageKey);
             largeImageKey.ItemSelected += (o, e) =>
             {

@@ -1780,10 +1780,13 @@ namespace Discord
             callback(result);
         }
 
+        //Hacky solution to fix CallbackOnCollectedDelegate :p https://github.com/discord/gamesdk-and-dispatch/issues/102
+        FFIMethods.UpdateActivityCallback updateActivityCallback;
+
         public void UpdateActivity(Activity activity, UpdateActivityHandler callback)
         {
             GCHandle wrapped = GCHandle.Alloc(callback);
-            Methods.UpdateActivity(MethodsPtr, ref activity, GCHandle.ToIntPtr(wrapped), UpdateActivityCallbackImpl);
+            Methods.UpdateActivity(MethodsPtr, ref activity, GCHandle.ToIntPtr(wrapped), updateActivityCallback = UpdateActivityCallbackImpl);
         }
 
         [MonoPInvokeCallback]

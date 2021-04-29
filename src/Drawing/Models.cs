@@ -19,6 +19,9 @@ using OpenTK;
 using linerider.Utils;
 using linerider.Rendering;
 using System.Drawing;
+using System.IO;
+using System.Diagnostics;
+using System;
 
 namespace linerider
 {
@@ -30,6 +33,7 @@ namespace linerider
         public static int BodyDeadTexture;
         public static int ArmTexture;
         public static int LegTexture;
+
         public static readonly DoubleRect SledRect = new DoubleRect(-0.6875, -2.3125, 17.9195, 8.95975);
         public static readonly DoubleRect BrokenSledRect = new DoubleRect(-0.3645, -2.3125, 17.477, 8.7385);
         public static readonly DoubleRect BodyRect = new DoubleRect(0.026, -3.145, 13.944, 6.972);
@@ -45,7 +49,7 @@ namespace linerider
         public static readonly FloatRect ArmUV = new FloatRect(0, 0, 1, 1);
         public static readonly FloatRect LegUV = new FloatRect(0, 0, 1, 1);
 
-        public static void LoadModels()
+        public static void LoadDefaultModels()
         {
             BodyTexture = StaticRenderer.LoadTexture(GameResources.body_img);
             BodyDeadTexture = StaticRenderer.LoadTexture(GameResources.bodydead_img);
@@ -66,6 +70,44 @@ namespace linerider
 
             ArmTexture = StaticRenderer.LoadTexture(arm_img);
             LegTexture = StaticRenderer.LoadTexture(leg_img);
+        }
+        public static void LoadModelsFromFolder(string folderName)
+        {
+            //Load the default textures, if one isn't found it'll be ignored
+            LoadDefaultModels();
+
+            string BodyLocation = Program.UserDirectory + "Riders\\" + folderName + "\\body.png";
+            string BodyDeadLocation = Program.UserDirectory + "Riders\\" + folderName + "\\bodydead.png";
+            
+            string SledLocation = Program.UserDirectory + "Riders\\" + folderName + "\\sled.png";
+            string BrokenSledLocation = Program.UserDirectory + "Riders\\" + folderName + "\\brokensled.png";
+            
+            string ArmLocation = Program.UserDirectory + "Riders\\" + folderName + "\\arm.png";
+            string LegLocation = Program.UserDirectory + "Riders\\" + folderName + "\\leg.png";
+
+            TryLoadTextureFromFile(ref BodyTexture, BodyLocation); 
+            TryLoadTextureFromFile(ref BodyDeadTexture, BodyDeadLocation); 
+            
+            TryLoadTextureFromFile(ref SledTexture, SledLocation); 
+            TryLoadTextureFromFile(ref BrokenSledTexture, BrokenSledLocation); 
+            
+            TryLoadTextureFromFile(ref ArmTexture, ArmLocation); 
+            TryLoadTextureFromFile(ref LegTexture, LegLocation); 
+        }
+        public static void TryLoadTextureFromFile(ref int glTex, string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    Bitmap texture = new Bitmap(path);
+                    glTex = StaticRenderer.LoadTexture(texture);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine($"Error loading texture \"{path.Replace(Program.UserDirectory, "")}\"... Stack Trace: {e}");
+            }
         }
     }
 }
